@@ -12,7 +12,6 @@ import { useModals } from "@/hooks/use-modals";
 import { TopicWithBookmarkCount, useTopics } from "@/hooks/use-topics";
 import { Bookmark as BookmarkType } from "@prisma/client";
 import {
-  Bookmark,
   ChevronDown,
   ChevronUp,
   LogIn,
@@ -227,16 +226,22 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
       <div className="flex flex-col items-center justify-center h-screen w-full bg-amber-50">
         <div className="text-center p-10 bg-white rounded-2xl shadow-lg max-w-md mx-4">
           <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-              <Bookmark className="h-8 w-8" />
+            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white shadow border">
+              <Image
+                src="/favicon.ico"
+                alt="Chienowa Favicon"
+                width={80}
+                height={80}
+                className="rounded-full"
+                priority
+              />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Kokolinkへようこそ！
+          <h1 className="text-2xl font-sans font-bold text-gray-900">
+            Chienowa
           </h1>
           <p className="text-gray-600 mt-2 mb-6">
-            気になる情報やサイトを、トピックごとに整理・保存・共有できる、
-            あなただけのナレッジベースを作成しましょう。
+            世界最高のナレッジベースを作成しよう。
           </p>
           <AuthButton />
         </div>
