@@ -8,12 +8,9 @@ export interface TopicWithBookmarkCount extends Topic {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-/**
- * トピック管理機能を提供するカスタムフック
- */
 export const useTopics = (
   initialTopics: TopicWithBookmarkCount[] = [],
-  isAuthenticated: boolean // ★ 引数を追加
+  isAuthenticated: boolean
 ) => {
   const { mutate: globalMutate } = useSWRConfig();
   const {
@@ -21,7 +18,7 @@ export const useTopics = (
     error,
     mutate: localMutate,
   } = useSWR<TopicWithBookmarkCount[]>(
-    isAuthenticated ? "/api/topics" : null, // ★ ログイン時のみAPIを叩く
+    isAuthenticated ? "/api/topics" : null,
     fetcher
   );
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
@@ -34,8 +31,8 @@ export const useTopics = (
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentTopics = data || initialTopics;
-  const selectedTopic = Array.isArray(currentTopics) // ★ currentTopicsが配列であることを保証
+  const currentTopics = Array.isArray(data) ? data : initialTopics;
+  const selectedTopic = Array.isArray(currentTopics)
     ? currentTopics.find((t) => t.id === selectedTopicId)
     : undefined;
 
@@ -64,66 +61,69 @@ export const useTopics = (
     });
   };
 
-  const handleCreateTopic = async () => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/topics", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: topicForm.title,
-          description: topicForm.description,
-          emoji: topicForm.emoji || "📁",
-        }),
-      });
+  const handleCreateTopic =
+    async (): Promise<TopicWithBookmarkCount | null> => {
+      setIsSubmitting(true);
+      try {
+        const response = await fetch("/api/topics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: topicForm.title,
+            description: topicForm.description,
+            emoji: topicForm.emoji || "📁",
+          }),
+        });
 
-      if (response.ok) {
-        const newTopic = await response.json();
-        await localMutate();
-        resetTopicForm();
-        setSelectedTopicId(newTopic.id);
-        return true;
+        if (response.ok) {
+          const newTopic = await response.json();
+          await localMutate();
+          resetTopicForm();
+          setSelectedTopicId(newTopic.id);
+          return newTopic;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error creating topic:", error);
+        return null;
+      } finally {
+        setIsSubmitting(false);
       }
-      return false;
-    } catch (error) {
-      console.error("Error creating topic:", error);
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
-  const handleUpdateTopic = async () => {
-    if (!editingTopic) return false;
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(`/api/topics/${editingTopic.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: topicForm.title,
-          description: topicForm.description,
-          emoji: topicForm.emoji,
-        }),
-      });
+  const handleUpdateTopic =
+    async (): Promise<TopicWithBookmarkCount | null> => {
+      if (!editingTopic) return null;
+      setIsSubmitting(true);
+      try {
+        const response = await fetch(`/api/topics/${editingTopic.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: topicForm.title,
+            description: topicForm.description,
+            emoji: topicForm.emoji,
+          }),
+        });
 
-      if (response.ok) {
-        await localMutate();
-        resetTopicForm();
-        return true;
+        if (response.ok) {
+          const updatedTopic = await response.json();
+          await localMutate();
+          resetTopicForm();
+          return updatedTopic;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error updating topic:", error);
+        return null;
+      } finally {
+        setIsSubmitting(false);
       }
-      return false;
-    } catch (error) {
-      console.error("Error updating topic:", error);
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
   const handleDeleteTopic = async (topicId: string) => {
     try {
@@ -152,7 +152,7 @@ export const useTopics = (
   };
 
   return {
-    topics: Array.isArray(currentTopics) ? currentTopics : [],
+    topics: currentTopics,
     selectedTopic,
     selectedTopicId,
     isLoading: !error && !data && isAuthenticated,
@@ -164,8 +164,10 @@ export const useTopics = (
     setSelectedTopicId,
     openEditTopic,
     resetTopicForm,
-    handleCreateTopic,
-    handleUpdateTopic,
+    handleCreateTopic: handleCreateTopic, // 既存の呼び出し元のために残す
+    handleUpdateTopic: handleUpdateTopic, // 既存の呼び出し元のために残す
+    handleCreateTopicAndGet: handleCreateTopic, // 新しいロジック用 (実体は同じ)
+    handleUpdateTopicAndGet: handleUpdateTopic, // 新しいロジック用 (実体は同じ)
     handleDeleteTopic,
     mutateTopics: localMutate,
   };
