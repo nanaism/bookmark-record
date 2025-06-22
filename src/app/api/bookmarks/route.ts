@@ -4,15 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
 /**
- * 特定トピックのブックマーク一覧を取得する (本人所有のトピックに限る)
+ * ★★★ 特定トピックのブックマーク一覧を誰でも取得できるようにする ★★★
  */
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
-
+  // 認証チェックを削除！
   try {
     const { searchParams } = new URL(request.url);
     const topicId = searchParams.get("topicId");
@@ -24,24 +19,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ★★★ トピックの所有権を確認 ★★★
-    const topic = await prisma.topic.findFirst({
-      where: { id: topicId, userId },
-    });
-    if (!topic) {
-      return NextResponse.json(
-        { error: "Topic not found or access denied" },
-        { status: 404 }
-      );
-    }
+    // トピックの所有権チェックを削除！
 
     const bookmarks = await prisma.bookmark.findMany({
       where: { topicId },
-      orderBy: [
-        // ★ 配列形式で複数キーを指定
-        { order: "asc" }, // orderフィールドの昇順
-        { createdAt: "desc" }, // orderがnullの場合は作成日の降順
-      ],
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
 
     return NextResponse.json(bookmarks);

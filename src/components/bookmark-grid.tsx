@@ -74,6 +74,7 @@ interface BookmarkGridProps {
   togglingFavoriteId: string | null;
   onFetchRecommendations: (bookmark: BookmarkType) => void;
   onOrderChange: (activeId: string, overId: string) => void; // onOrderChangeを追加
+  currentUserId?: string | null; // ★ propsを追加
 }
 
 // ブックマークカードをdnd-kitでラップする新しいコンポーネント
@@ -109,6 +110,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   togglingFavoriteId,
   onFetchRecommendations,
   onOrderChange, // propsとして受け取る
+  currentUserId, // ★ propsを受け取る
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -311,56 +313,58 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     >
                       サイトへ移動 <ExternalLink className="w-3 h-3" />
                     </a>
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                        onClick={() => onFetchRecommendations(bookmark)}
-                      >
-                        <Sparkles className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 hover:bg-amber-50"
-                        onClick={() => onBookmarkEdit(bookmark)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-2xl border border-red-200">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              ブックマークを削除
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              このブックマークを削除してもよろしいですか？
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="rounded-xl">
-                              キャンセル
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onBookmarkDelete(bookmark.id)}
-                              className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
+                    {currentUserId === bookmark.authorId && (
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                          onClick={() => onFetchRecommendations(bookmark)}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 hover:bg-amber-50"
+                          onClick={() => onBookmarkEdit(bookmark)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                             >
-                              削除
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="rounded-2xl border border-red-200">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                ブックマークを削除
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                このブックマークを削除してもよろしいですか？
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="rounded-xl">
+                                キャンセル
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => onBookmarkDelete(bookmark.id)}
+                                className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
+                              >
+                                削除
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
                   </CardFooter>
                 </div>
               </Card>

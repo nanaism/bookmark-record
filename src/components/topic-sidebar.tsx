@@ -81,6 +81,7 @@ interface TopicSidebarProps {
   showTopicModal: boolean;
   setShowTopicModal: (show: boolean) => void;
   onOrderChange: (activeId: string, overId: string) => void;
+  currentUserId?: string | null; // ★ propsを追加
 }
 
 export const TopicSidebar: React.FC<TopicSidebarProps> = ({
@@ -93,6 +94,7 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
   showTopicModal,
   setShowTopicModal,
   onOrderChange,
+  currentUserId, // ★ propsを受け取る
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -215,50 +217,52 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onTopicEdit(topic);
-                              }}
-                              className="p-1.5 text-gray-400 hover:text-amber-600 rounded-lg hover:bg-amber-50"
-                            >
-                              <Edit className="w-3 h-3" />
-                            </button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                  }}
-                                  className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="rounded-2xl border border-red-200">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    トピックを削除
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    このトピックとすべてのブックマークを削除してもよろしいですか？
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel className="rounded-xl">
-                                    キャンセル
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => onTopicDelete(topic.id)}
-                                    className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
+                          {currentUserId === topic.userId && (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onTopicEdit(topic);
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-amber-600 rounded-lg hover:bg-amber-50"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50"
                                   >
-                                    削除
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-2xl border border-red-200">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      トピックを削除
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      このトピックとすべてのブックマークを削除してもよろしいですか？
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="rounded-xl">
+                                      キャンセル
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => onTopicDelete(topic.id)}
+                                      className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
+                                    >
+                                      削除
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </SortableTopicItem>

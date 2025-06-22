@@ -4,18 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
 /**
- * ログインユーザーのトピック一覧を取得する
+ * ★★★ 全てのユーザーのトピック一覧を取得する ★★★
  */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
-
+  // 認証チェックを削除！
   try {
     const topics = await prisma.topic.findMany({
-      where: { userId },
+      // where句を削除して、全ユーザーのトピックを取得
       include: {
         _count: {
           select: { bookmarks: true },
@@ -24,7 +19,6 @@ export async function GET() {
       orderBy: [{ order: "asc" }, { updatedAt: "desc" }],
     });
 
-    // ★★★ 型を明示的に指定 ★★★
     const topicsWithCount = topics.map(
       (topic: Topic & { _count: { bookmarks: number } }) => ({
         ...topic,
@@ -41,6 +35,7 @@ export async function GET() {
     );
   }
 }
+
 /**
  * 新しいトピックを作成する
  */

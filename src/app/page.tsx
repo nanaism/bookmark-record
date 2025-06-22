@@ -16,9 +16,7 @@ async function getInitialTopics(): Promise<TopicWithBookmarkCount[]> {
           select: { bookmarks: true },
         },
       },
-      orderBy: {
-        updatedAt: "desc",
-      },
+      orderBy: [{ order: "asc" }, { updatedAt: "desc" }],
     });
 
     // Prismaの_countをbookmarkCountプロパティに変換
