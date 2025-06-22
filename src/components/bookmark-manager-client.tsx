@@ -84,10 +84,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   };
 
   const topicsHook = useTopics(initialTopics);
-  const bookmarksHook = useBookmarks(
-    topicsHook.selectedTopicId,
-    topicsHook.mutateTopics
-  );
+  const bookmarksHook = useBookmarks(topicsHook.selectedTopicId);
   const modalsHook = useModals(topicsHook.selectedTopicId);
 
   const handleTopicModalSubmit = async () => {
@@ -302,6 +299,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 }}
                 showBookmarkModal={modalsHook.showBookmarkModal}
                 setShowBookmarkModal={modalsHook.setShowBookmarkModal}
+                togglingFavoriteId={bookmarksHook.togglingFavoriteId} // ★ この行を追加
               />
             </main>
           </div>

@@ -1,6 +1,6 @@
 import { Topic } from "@prisma/client";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 // APIから返される拡張されたTopic型（ブックマーク数を含む）
 export interface TopicWithBookmarkCount extends Topic {
@@ -17,10 +17,12 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
  * 両方に対応しています。
  */
 export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
-  const { data, error, mutate } = useSWR<TopicWithBookmarkCount[]>(
-    "/api/topics",
-    fetcher
-  );
+  const { mutate: globalMutate } = useSWRConfig();
+  const {
+    data,
+    error,
+    mutate: localMutate,
+  } = useSWR<TopicWithBookmarkCount[]>("/api/topics", fetcher);
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [editingTopic, setEditingTopic] =
     useState<TopicWithBookmarkCount | null>(null);
@@ -29,15 +31,18 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     title: "",
     description: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false); // ★ 送信中状態を追加
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // SWRデータが利用可能な場合はそれを使用、そうでなければ初期データを使用
-  const currentTopics = data && data.length > 0 ? data : initialTopics;
+  const currentTopics = data || initialTopics;
   const selectedTopic = currentTopics.find((t) => t.id === selectedTopicId);
 
   // トピックが存在する場合、最初のトピックを自動選択
   useEffect(() => {
-    if (currentTopics.length > 0 && !selectedTopicId) {
+    // favoritesが選択されている場合や、すでに選択肢がある場合は何もしない
+    if (selectedTopicId === "favorites" || selectedTopicId) return;
+
+    if (currentTopics.length > 0) {
       setSelectedTopicId(currentTopics[0].id);
     }
   }, [currentTopics, selectedTopicId]);
@@ -57,7 +62,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
   };
 
   const handleCreateTopic = async () => {
-    setIsSubmitting(true); // ★ ローディング開始
+    setIsSubmitting(true);
     try {
       const response = await fetch("/api/topics", {
         method: "POST",
@@ -73,12 +78,10 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
 
       if (response.ok) {
         const newTopic = await response.json();
-        await mutate();
+        await localMutate();
         resetTopicForm();
         // 初回作成時は新しいトピックを自動選択
-        if (!selectedTopicId) {
-          setSelectedTopicId(newTopic.id);
-        }
+        setSelectedTopicId(newTopic.id);
         return true;
       }
       return false;
@@ -86,13 +89,13 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
       console.error("Error creating topic:", error);
       return false;
     } finally {
-      setIsSubmitting(false); // ★ ローディング終了
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdateTopic = async () => {
     if (!editingTopic) return false;
-    setIsSubmitting(true); // ★ ローディング開始
+    setIsSubmitting(true);
     try {
       const response = await fetch(`/api/topics/${editingTopic.id}`, {
         method: "PUT",
@@ -107,7 +110,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
       });
 
       if (response.ok) {
-        await mutate();
+        await localMutate();
         resetTopicForm();
         return true;
       }
@@ -116,7 +119,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
       console.error("Error updating topic:", error);
       return false;
     } finally {
-      setIsSubmitting(false); // ★ ローディング終了
+      setIsSubmitting(false);
     }
   };
 
@@ -127,11 +130,16 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
       });
 
       if (response.ok) {
-        await mutate();
-        // 削除されたトピックが選択中の場合、残りのトピックから最初のものを選択
-        if (selectedTopicId === topicId && currentTopics.length > 1) {
-          const remainingTopics = currentTopics.filter((t) => t.id !== topicId);
-          setSelectedTopicId(remainingTopics[0]?.id || "");
+        // 関連するキャッシュもすべて更新
+        await localMutate(); // トピック一覧を更新
+        await globalMutate(`/api/bookmarks?topicId=${topicId}`); // 削除されたトピックのブックマークキャッシュをクリア
+        await globalMutate("/api/favorites"); // お気に入り一覧も更新
+
+        const remainingTopics = currentTopics.filter((t) => t.id !== topicId);
+        if (selectedTopicId === topicId) {
+          // 削除されたトピックが選択中の場合
+          // 残りのトピックがあれば最初のものを、なければ「お気に入り」を選択
+          setSelectedTopicId(remainingTopics[0]?.id || "favorites");
         }
         return true;
       }
@@ -154,7 +162,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     topicForm,
     setTopicForm,
     editingTopic,
-    isSubmitting, // ★ 返り値に追加
+    isSubmitting,
 
     // 操作関数
     setSelectedTopicId,
@@ -163,6 +171,6 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     handleCreateTopic,
     handleUpdateTopic,
     handleDeleteTopic,
-    mutateTopics: mutate,
+    mutateTopics: localMutate,
   };
 };
