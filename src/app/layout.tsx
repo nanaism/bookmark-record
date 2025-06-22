@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kokolink",
-  description: "すべてが、ここに。",
+  description: "すべての情報が、ここに。",
 };
 
 export default async function RootLayout({
