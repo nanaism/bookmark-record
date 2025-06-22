@@ -33,6 +33,9 @@ model Topic {
   emoji       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  order       Int? // 並び順を保存するフィールド
+
 
   // リレーション: 1つのトピックに対して複数のブックマーク
   bookmarks Bookmark[]

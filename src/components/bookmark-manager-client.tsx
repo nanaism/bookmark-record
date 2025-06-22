@@ -105,6 +105,26 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     });
   };
 
+  // ▼▼▼ トピック並び替え用のハンドラを追加 ▼▼▼
+  const handleTopicOrderChange = (activeId: string, overId: string) => {
+    const oldIndex = topicsHook.topics.findIndex((t) => t.id === activeId);
+    const newIndex = topicsHook.topics.findIndex((t) => t.id === overId);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newOrderTopics = arrayMove(topicsHook.topics, oldIndex, newIndex);
+    topicsHook.mutateTopics(newOrderTopics, false); // UIを即時更新
+
+    // サーバーに新しい順序を送信
+    fetch("/api/topics/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderedIds: newOrderTopics.map((t) => t.id) }),
+    }).catch(() => {
+      topicsHook.mutateTopics(); // エラー時はUIを元に戻す
+    });
+  };
+
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
   const { mutate: globalMutate } = useSWRConfig();
@@ -288,6 +308,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
           onTopicCreate={handleTopicCreate}
           showTopicModal={modalsHook.showTopicModal}
           setShowTopicModal={modalsHook.setShowTopicModal}
+          onOrderChange={handleTopicOrderChange} // ★ propsを渡す
         />
         <SidebarInset className="flex-1 flex flex-col">
           <header className="flex shrink-0 items-center justify-between p-6 bg-white border-b border-amber-200">
@@ -409,7 +430,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 setShowBookmarkModal={modalsHook.setShowBookmarkModal}
                 togglingFavoriteId={bookmarksHook.togglingFavoriteId}
                 onFetchRecommendations={handleFetchRecommendations}
-                onOrderChange={handleBookmarkOrderChange} // ★ propsを渡す
+                onOrderChange={handleBookmarkOrderChange}
               />
             </main>
           </div>

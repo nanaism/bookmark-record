@@ -7,16 +7,13 @@ import { auth } from "../../../../auth";
  * ログインユーザーのトピック一覧を取得する
  */
 export async function GET() {
-  // 1. セッション情報を取得
   const session = await auth();
-  // 2. 認証チェック
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = session.user.id;
 
   try {
-    // 3. 自分のuserIdに紐づくトピックのみを検索
     const topics = await prisma.topic.findMany({
       where: { userId },
       include: {
@@ -24,11 +21,10 @@ export async function GET() {
           select: { bookmarks: true },
         },
       },
-      orderBy: {
-        updatedAt: "desc",
-      },
+      orderBy: [{ order: "asc" }, { updatedAt: "desc" }],
     });
 
+    // ★★★ 型を明示的に指定 ★★★
     const topicsWithCount = topics.map(
       (topic: Topic & { _count: { bookmarks: number } }) => ({
         ...topic,
@@ -45,7 +41,6 @@ export async function GET() {
     );
   }
 }
-
 /**
  * 新しいトピックを作成する
  */
