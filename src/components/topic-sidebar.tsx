@@ -32,6 +32,7 @@ import {
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
 import { formatDate } from "@/lib/utils/date";
 import { Edit, Plus, Star, Trash2 } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 /**
@@ -64,10 +65,13 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
       <SidebarHeader className="border-b border-amber-100 p-6 pr-0 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow border border-amber-200">
-            <img
+            <Image
               src="/favicon.ico"
               alt="Chienowa Favicon"
               className="h-8 w-8"
+              width={32}
+              height={32}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
           <div>
