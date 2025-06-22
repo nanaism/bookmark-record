@@ -3,10 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
 /**
- * ★★★ 特定トピックのブックマーク一覧を誰でも取得できるようにする ★★★
+ * 特定トピックのブックマーク一覧を取得する (公開)
  */
 export async function GET(request: NextRequest) {
-  // 認証チェックを削除！
   try {
     const { searchParams } = new URL(request.url);
     const topicId = searchParams.get("topicId");
@@ -17,8 +16,6 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // トピックの所有権チェックを削除！
 
     const bookmarks = await prisma.bookmark.findMany({
       where: { topicId },
@@ -36,7 +33,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * 新しいブックマークを作成する
+ * 新しいブックマークを「処理待ち」状態で作成する
  */
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -47,7 +44,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    // ★ descriptionは受け取らないか、受けてもogDescriptionより優先するなど仕様を決める
     const { url, description, topicId } = body;
 
     if (!url || !topicId) {
@@ -57,28 +53,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ★★★ OGP取得処理を削除！ ★★★
-    // まずはOGP情報が空の状態でブックマークを作成する
+    try {
+      new URL(url);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid URL format" },
+        { status: 400 }
+      );
+    }
+
+    const topic = await prisma.topic.findFirst({
+      where: { id: topicId, userId },
+    });
+    if (!topic) {
+      return NextResponse.json(
+        { error: "Topic not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    // OGP情報を空のまま、ステータスを「PENDING」で作成
     const bookmark = await prisma.bookmark.create({
       data: {
         url,
-        description: description || null, // フォームからの説明を一時的に使用
+        description: description || null,
         topicId,
         authorId: userId,
-        ogTitle: url, // タイトルが空だと寂しいので、一旦URLを入れておく
-        ogDescription: "Loading...", // 処理中であることが分かるように
+        ogTitle: url, // 一時的にURLをタイトルとして設定
+        ogDescription: "OGP情報を取得中です...", // 状態がわかるように
         ogImage: null,
+        processingStatus: "PENDING", // 処理待ち状態に設定
       },
     });
 
-    // ★★★ Trigger the background processing ★★★
-    // 新しく作るAPIエンドポイントを「叩くだけ」で、OGP取得処理をバックグラウンドで開始させる
-    // `fetch`を`await`しないことで、この処理の完了を待たずにレスポンスを返す（Fire and Forget）
-    fetch(`${new URL(request.url).origin}/api/bookmarks/process-ogp`, {
+    // ★★★ 即時処理をバックグラウンドでトリガー ★★★
+    fetch(`${new URL(request.url).origin}/api/ogp-process`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bookmarkId: bookmark.id }),
     });
+
+    // ここでバックグラウンド処理をトリガーする必要はなくなります。
+    // Cronが自動で処理してくれるのを待ちます。
 
     return NextResponse.json(bookmark, { status: 201 });
   } catch (error) {

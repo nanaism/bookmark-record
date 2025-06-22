@@ -20,11 +20,16 @@ datasource db {
   relationMode = "prisma"
 }
 
+// OGP処理ステータスを管理するためのEnum（列挙型）
+enum ProcessingStatus {
+  PENDING     // 処理待ち
+  IN_PROGRESS // 処理中
+  COMPLETED   // 完了
+  FAILED      // 失敗
+}
+
 /**
  * トピック（ブックマークのカテゴリ）
- *
- * ブックマークを整理するためのカテゴリ機能を提供します。
- * 各トピックには複数のブックマークを関連付けることができます。
  */
 model Topic {
   id          String   @id @default(cuid())
@@ -33,50 +38,39 @@ model Topic {
   emoji       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  order       Int? // 並び順を保存するフィールド
+  order       Int?
 
-
-  // リレーション: 1つのトピックに対して複数のブックマーク
   bookmarks Bookmark[]
-
-  // --- 追加: ユーザーとの関連 ---
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /**
  * ブックマーク（保存されたURL）
- *
- * ユーザーが保存したいWebページのURL情報を管理します。
- * 必ずいずれかのトピックに関連付けられます。
  */
 model Bookmark {
-  id          String   @id @default(cuid())
-  url         String
-  description String?
-  ogTitle     String? // OGPのタイトル
-  ogDescription String? // OGPの説明
-  ogImage     String? // OGPの画像URL
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  isFavorite  Boolean  @default(false)
+  id               String            @id @default(cuid())
+  url              String
+  description      String?
+  ogTitle          String?
+  ogDescription    String?
+  ogImage          String?
+  isFavorite       Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  order            Int?
   
-  order       Int? // 並び順を保存するフィールド。nullableにしておくことで既存データに影響を与えない
+  // ★★★ この行を追加 ★★★
+  processingStatus ProcessingStatus? @default(PENDING)
 
-
-  // 外部キー: 所属するトピックのID
   topicId String
-  // リレーション: トピック削除時にブックマークも自動削除（Cascade）
   topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-  // --- 追加: 投稿者との関連 ---
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
-// --- 以下、Auth.js用のモデルをすべて追加 ---
+// --- Auth.js用のモデル ---
 
 model Account {
   id                String  @id @default(cuid())
@@ -113,8 +107,6 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-
-  // --- 追加: Userが作成したTopicとBookmark ---
   topics        Topic[]
   bookmarks     Bookmark[]
 }

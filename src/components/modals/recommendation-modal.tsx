@@ -50,7 +50,7 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <DialogTitle className="text-lg font-semibold text-gray-900">
-              関連する新しい発見
+              こちらのサイトはいかがですか？✨️
             </DialogTitle>
           </div>
           <p

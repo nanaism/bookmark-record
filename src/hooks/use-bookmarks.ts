@@ -1,33 +1,85 @@
-import { Bookmark as BookmarkType } from "@prisma/client";
-import { useEffect, useState } from "react";
+import { Bookmark as BookmarkType, ProcessingStatus } from "@prisma/client";
+import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-/**
- * ブックマーク管理機能を提供するカスタムフック
- *
- * 指定されたトピックのブックマークの取得、作成、更新、削除、
- * および一括作成機能を提供します。SWRを使用してデータの
- * キャッシュと自動再取得を行います。
- */
 export const useBookmarks = (
   topicId: string | null,
-  isAuthenticated: boolean // ★ 引数を追加
+  isAuthenticated: boolean
 ) => {
   const { mutate: globalMutate } = useSWRConfig();
-  // ★ ログイン状態で、かつtopicIdがある場合のみキーを有効にする
   const swrKey =
     isAuthenticated && topicId
       ? topicId === "favorites"
         ? "/api/favorites"
         : `/api/bookmarks?topicId=${topicId}`
       : null;
+
   const {
     data,
     error,
     mutate: localMutate,
   } = useSWR<BookmarkType[]>(swrKey, fetcher);
+
+  const bookmarks = Array.isArray(data) ? data : [];
+
+  // ポーリング用のロジック
+  const [pendingIds, setPendingIds] = useState<string[]>([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // 処理待ちのIDがなければ、ポーリングを停止
+    if (pendingIds.length === 0 && intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      return;
+    }
+
+    // 処理待ちのIDがあり、かつポーリングがまだ開始されていなければ、開始
+    if (pendingIds.length > 0 && !intervalRef.current) {
+      intervalRef.current = setInterval(async () => {
+        try {
+          const response = await fetch("/api/bookmarks/status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: pendingIds }),
+          });
+          if (!response.ok) return;
+
+          const statuses: {
+            id: string;
+            processingStatus: ProcessingStatus;
+          }[] = await response.json();
+          const completedOrFailedIds = statuses
+            .filter(
+              (s) =>
+                s.processingStatus === "COMPLETED" ||
+                s.processingStatus === "FAILED"
+            )
+            .map((s) => s.id);
+
+          if (completedOrFailedIds.length > 0) {
+            // 処理が完了したIDがあれば、リスト全体を再取得してUIを更新
+            localMutate();
+            // 処理が完了したIDをpendingリストから除去
+            setPendingIds((prev) =>
+              prev.filter((id) => !completedOrFailedIds.includes(id))
+            );
+          }
+        } catch (e) {
+          console.error("Polling failed:", e);
+        }
+      }, 3000); // 3秒ごとにチェック
+    }
+
+    // コンポーネントがアンマウントされた時にタイマーをクリーンアップ
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [pendingIds, localMutate]);
 
   const [editingBookmark, setEditingBookmark] = useState<BookmarkType | null>(
     null
@@ -46,17 +98,6 @@ export const useBookmarks = (
     null
   );
 
-  useEffect(() => {
-    setBookmarkForm((prev) => ({ ...prev, topicId: topicId || "" }));
-    setBulkForm((prev) => ({ ...prev, topicId: topicId || "" }));
-  }, [topicId]);
-
-  const resetBookmarkForms = () => {
-    setBookmarkForm({ topicId: topicId || "", url: "", description: "" });
-    setBulkForm({ topicId: topicId || "", urls: "" });
-    setEditingBookmark(null);
-  };
-
   const openEditBookmark = (bookmark: BookmarkType) => {
     setEditingBookmark(bookmark);
     setBookmarkForm({
@@ -66,9 +107,14 @@ export const useBookmarks = (
     });
   };
 
+  const resetBookmarkForms = () => {
+    setBookmarkForm({ topicId: topicId || "", url: "", description: "" });
+    setBulkForm({ topicId: topicId || "", urls: "" });
+    setEditingBookmark(null);
+  };
+
   const handleCreateBookmark = async () => {
     setIsSubmitting(true);
-    let success = false;
     try {
       const response = await fetch("/api/bookmarks", {
         method: "POST",
@@ -79,22 +125,23 @@ export const useBookmarks = (
           topicId: bookmarkForm.topicId,
         }),
       });
-      success = response.ok;
+      if (!response.ok) throw new Error("Failed to create bookmark");
+
+      const newBookmark: BookmarkType = await response.json();
+
+      // 作成したブックマークをUIに即時反映＆ポーリングリストに追加
+      localMutate([...bookmarks, newBookmark], false);
+      setPendingIds((prev) => [...prev, newBookmark.id]);
+
+      await globalMutate("/api/topics");
+      resetBookmarkForms();
+      return true;
     } catch (error) {
       console.error("Error creating bookmark:", error);
-      success = false;
+      return false;
     } finally {
-      if (success) {
-        // ★★★ この再取得命令が重要 ★★★
-        // まず不完全なデータでUIが更新され、バックグラウンド処理完了後に
-        // SWRが自動で再取得して再度UIを更新してくれる
-        await localMutate();
-        await globalMutate("/api/topics");
-        resetBookmarkForms();
-      }
       setIsSubmitting(false);
     }
-    return success;
   };
 
   const handleUpdateBookmark = async () => {
@@ -190,8 +237,8 @@ export const useBookmarks = (
   };
 
   return {
-    bookmarks: data || [],
-    isLoading: !error && !data && topicId,
+    bookmarks,
+    isLoading: !error && !data && !!topicId,
     isError: error,
     bookmarkForm,
     setBookmarkForm,
