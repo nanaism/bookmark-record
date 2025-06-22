@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
 import { formatDate } from "@/lib/utils/date";
-import { Bookmark, Edit, Plus, Star, Trash2 } from "lucide-react";
+import { Edit, Plus, Star, Trash2 } from "lucide-react";
 import React from "react";
 
 /**
@@ -62,15 +62,19 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
     <Sidebar className="border-r border-amber-200 bg-white shadow-sm">
       {/* サイドバーヘッダー */}
       <SidebarHeader className="border-b border-amber-100 p-6 pr-0 bg-gradient-to-r from-amber-50 to-orange-50">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-            <Bookmark className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow border border-amber-200">
+            <img
+              src="/favicon.ico"
+              alt="Chienowa Favicon"
+              className="h-8 w-8"
+            />
           </div>
           <div>
             <h1 className="text-2xl font-semibold font-sans text-gray-900">
-              Kokolink
+              Chienowa
             </h1>
-            <p className="text-xs text-gray-600">すべての情報が、ここに。</p>
+            <p className="text-xs text-gray-600">知をつなぐ。未来がひらく。</p>
           </div>
         </div>
       </SidebarHeader>

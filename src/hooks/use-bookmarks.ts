@@ -11,13 +11,17 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
  * および一括作成機能を提供します。SWRを使用してデータの
  * キャッシュと自動再取得を行います。
  */
-export const useBookmarks = (topicId: string | null) => {
+export const useBookmarks = (
+  topicId: string | null,
+  isAuthenticated: boolean // ★ 引数を追加
+) => {
   const { mutate: globalMutate } = useSWRConfig();
+  // ★ ログイン状態で、かつtopicIdがある場合のみキーを有効にする
   const swrKey =
-    topicId === "favorites"
-      ? "/api/favorites"
-      : topicId
-      ? `/api/bookmarks?topicId=${topicId}`
+    isAuthenticated && topicId
+      ? topicId === "favorites"
+        ? "/api/favorites"
+        : `/api/bookmarks?topicId=${topicId}`
       : null;
   const {
     data,

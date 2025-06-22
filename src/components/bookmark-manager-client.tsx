@@ -12,7 +12,6 @@ import { useModals } from "@/hooks/use-modals";
 import { TopicWithBookmarkCount, useTopics } from "@/hooks/use-topics";
 import { Bookmark as BookmarkType } from "@prisma/client";
 import {
-  Bookmark,
   ChevronDown,
   ChevronUp,
   LogIn,
@@ -22,10 +21,14 @@ import {
 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { BookmarkGrid } from "./bookmark-grid";
 import { BookmarkModal } from "./modals/bookmark-modal";
 import { BulkAddModal } from "./modals/bulk-add-modal";
+import {
+  RecommendationModal,
+  RecommendationResult,
+} from "./modals/recommendation-modal";
 import { TopicModal } from "./modals/topic-modal";
 import { TopicSidebar } from "./topic-sidebar";
 
@@ -39,8 +42,8 @@ const AuthButton = () => {
           <Image
             src={session.user.image}
             alt={session.user.name || "User"}
-            width={32} // widthの指定が必須
-            height={32} // heightの指定が必須
+            width={32}
+            height={32}
             className="w-8 h-8 rounded-full border-2 border-amber-200"
           />
         )}
@@ -76,16 +79,56 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
 }) => {
   const { data: session, status } = useSession();
 
+  // ★ ログイン状態をbooleanで定義
+  const isAuthenticated = status === "authenticated";
+
+  // ★ フックにisAuthenticatedを渡す
+  const topicsHook = useTopics(initialTopics, isAuthenticated);
+  const bookmarksHook = useBookmarks(
+    topicsHook.selectedTopicId,
+    isAuthenticated
+  );
+  const modalsHook = useModals(topicsHook.selectedTopicId);
+
+  const [recommendations, setRecommendations] = useState<
+    RecommendationResult[]
+  >([]);
+  const [isRecommendationLoading, setIsRecommendationLoading] = useState(false);
+  const [sourceBookmark, setSourceBookmark] = useState<BookmarkType | null>(
+    null
+  );
+
+  const handleFetchRecommendations = async (bookmark: BookmarkType) => {
+    setSourceBookmark(bookmark);
+    setRecommendations([]);
+    modalsHook.openRecommendationModal();
+    setIsRecommendationLoading(true);
+
+    try {
+      const response = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: bookmark.url }),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch recommendations");
+
+      const data = await response.json();
+      setRecommendations(data);
+    } catch (error) {
+      console.error(error);
+      setRecommendations([]);
+    } finally {
+      setIsRecommendationLoading(false);
+    }
+  };
+
   const getHeaderTitle = () => {
     if (topicsHook.selectedTopicId === "favorites") {
       return "お気に入り";
     }
     return topicsHook.selectedTopic?.title || "トピックを選択";
   };
-
-  const topicsHook = useTopics(initialTopics);
-  const bookmarksHook = useBookmarks(topicsHook.selectedTopicId);
-  const modalsHook = useModals(topicsHook.selectedTopicId);
 
   const handleTopicModalSubmit = async () => {
     const success = await (topicsHook.editingTopic
@@ -149,15 +192,24 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
       <div className="flex flex-col items-center justify-center h-screen w-full bg-amber-50">
         <div className="text-center p-10 bg-white rounded-2xl shadow-lg max-w-md mx-4">
           <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-              <Bookmark className="h-8 w-8" />
+            <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-white">
+              <Image
+                src="/favicon.ico"
+                alt="Chienowa Favicon"
+                width={80}
+                height={80}
+                className="h-20 w-20"
+              />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Kokolinkへようこそ！
+            Chienowaへようこそ！
           </h1>
-          <p className="text-gray-600 mt-2 mb-6">
-            気になる情報やサイトを、トピックごとに整理・保存・共有できる、
+          <p className="text-gray-600 mt-2">気になる情報やサイトを、</p>
+          <p className="text-gray-600 ">
+            トピックごとに整理・保存・共有できる、
+          </p>
+          <p className="text-gray-600 mb-6">
             あなただけのナレッジベースを作成しましょう。
           </p>
           <AuthButton />
@@ -288,18 +340,19 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
             <main className="flex-1 p-6 overflow-y-auto">
               <BookmarkGrid
                 bookmarks={bookmarksHook.bookmarks}
-                selectedTopic={topicsHook.selectedTopic} // selectedTopicがお気に入り選択時にはundefinedになるので、その状態を渡す
+                selectedTopic={topicsHook.selectedTopic}
                 isLoading={!!bookmarksHook.isLoading}
                 onBookmarkEdit={handleBookmarkEdit}
                 onBookmarkDelete={bookmarksHook.handleDeleteBookmark}
-                onBookmarkFavoriteToggle={bookmarksHook.handleToggleFavorite} // ★ この行を追加
+                onBookmarkFavoriteToggle={bookmarksHook.handleToggleFavorite}
                 onBookmarkCreate={() => {
                   bookmarksHook.resetBookmarkForms();
                   modalsHook.setShowBookmarkModal(true);
                 }}
                 showBookmarkModal={modalsHook.showBookmarkModal}
                 setShowBookmarkModal={modalsHook.setShowBookmarkModal}
-                togglingFavoriteId={bookmarksHook.togglingFavoriteId} // ★ この行を追加
+                togglingFavoriteId={bookmarksHook.togglingFavoriteId}
+                onFetchRecommendations={handleFetchRecommendations}
               />
             </main>
           </div>
@@ -314,6 +367,14 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         setTopicForm={topicsHook.setTopicForm}
         onSubmit={handleTopicModalSubmit}
         isSubmitting={topicsHook.isSubmitting}
+      />
+
+      <RecommendationModal
+        isOpen={modalsHook.showRecommendationModal}
+        onClose={modalsHook.closeRecommendationModal}
+        sourceUrl={sourceBookmark?.url || null}
+        recommendations={recommendations}
+        isLoading={isRecommendationLoading}
       />
     </SidebarProvider>
   );

@@ -10,6 +10,7 @@ export const useModals = (selectedTopicId: string) => {
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showRecommendationModal, setShowRecommendationModal] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // トピック変更時に説明文の展開状態をリセット
@@ -46,11 +47,15 @@ export const useModals = (selectedTopicId: string) => {
     setIsDescriptionExpanded(!isDescriptionExpanded);
   };
 
+  const openRecommendationModal = () => setShowRecommendationModal(true);
+  const closeRecommendationModal = () => setShowRecommendationModal(false);
+
   return {
     // モーダル表示状態
     showTopicModal,
     showBookmarkModal,
     showBulkModal,
+    showRecommendationModal,
     isDescriptionExpanded,
 
     // モーダル操作関数
@@ -60,11 +65,14 @@ export const useModals = (selectedTopicId: string) => {
     closeBookmarkModal,
     openBulkModal,
     closeBulkModal,
+    openRecommendationModal,
+    closeRecommendationModal,
     toggleDescriptionExpansion,
 
     // 直接的なセッター（既存のDialogコンポーネントとの互換性のため）
     setShowTopicModal,
     setShowBookmarkModal,
     setShowBulkModal,
+    setShowRecommendationModal,
   };
 };

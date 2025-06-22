@@ -34,6 +34,7 @@ import {
   Globe,
   Loader2,
   Plus,
+  Sparkles,
   Star,
   Trash2,
 } from "lucide-react";
@@ -51,6 +52,7 @@ interface BookmarkGridProps {
   showBookmarkModal: boolean;
   setShowBookmarkModal: (show: boolean) => void;
   togglingFavoriteId: string | null;
+  onFetchRecommendations: (bookmark: BookmarkType) => void;
 }
 
 export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
@@ -64,6 +66,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   showBookmarkModal,
   setShowBookmarkModal,
   togglingFavoriteId,
+  onFetchRecommendations,
 }) => {
   if (isLoading) {
     return (
@@ -154,7 +157,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
           key={bookmark.id}
           className="group relative flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl bg-white"
         >
-          <div className="absolute top-3 right-3 z-10">
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
@@ -242,7 +245,15 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
               >
                 サイトへ移動 <ExternalLink className="w-3 h-3" />
               </a>
-              <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                  onClick={() => onFetchRecommendations(bookmark)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
