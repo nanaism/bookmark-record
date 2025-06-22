@@ -1,22 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "../../../../../auth";
+
+// paramsがPromiseであることを型で明示
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
 
 /**
- * 指定されたトピックの詳細情報を取得する
- *
- * @param request - リクエストオブジェクト
- * @param params - URLパラメータ（トピックIDを含む）
- * @returns トピック詳細情報（ブックマーク数を含む）
+ * 指定されたトピックの詳細情報を取得する (本人所有のものに限る)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  // ★★★ 変更点 ★★★
+  const { id } = await params; // paramsをawaitで待つ
 
-    const topic = await prisma.topic.findUnique({
-      where: { id },
+  try {
+    const topic = await prisma.topic.findFirst({
+      where: { id, userId },
       include: {
         _count: {
           select: { bookmarks: true },
@@ -25,10 +30,12 @@ export async function GET(
     });
 
     if (!topic) {
-      return NextResponse.json({ error: "Topic not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Topic not found or access denied" },
+        { status: 404 }
+      );
     }
 
-    // レスポンス用にブックマーク数を追加
     const topicWithCount = {
       ...topic,
       bookmarkCount: topic._count.bookmarks,
@@ -45,18 +52,18 @@ export async function GET(
 }
 
 /**
- * 指定されたトピックの情報を更新する
- *
- * @param request - リクエストオブジェクト（title, description, emojiを含む）
- * @param params - URLパラメータ（トピックIDを含む）
- * @returns 更新されたトピック情報（ブックマーク数を含む）
+ * 指定されたトピックの情報を更新する (本人所有のものに限る)
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  // ★★★ 変更点 ★★★
+  const { id } = await params; // paramsをawaitで待つ
+
   try {
-    const { id } = await params;
     const body = await request.json();
     const { title, description, emoji } = body;
 
@@ -64,12 +71,17 @@ export async function PUT(
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
+    const existingTopic = await prisma.topic.findUnique({ where: { id } });
+    if (!existingTopic || existingTopic.userId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const topic = await prisma.topic.update({
       where: { id },
       data: {
         title,
         description: description || null,
-        emoji: emoji || "📁", // デフォルトの絵文字を設定
+        emoji: emoji || "📁",
       },
       include: {
         _count: {
@@ -78,7 +90,6 @@ export async function PUT(
       },
     });
 
-    // レスポンス用にブックマーク数を追加
     const topicWithCount = {
       ...topic,
       bookmarkCount: topic._count.bookmarks,
@@ -95,18 +106,22 @@ export async function PUT(
 }
 
 /**
- * 指定されたトピックを削除する
- *
- * @param request - リクエストオブジェクト
- * @param params - URLパラメータ（トピックIDを含む）
- * @returns 削除成功メッセージ
+ * 指定されたトピックを削除する (本人所有のものに限る)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  // ★★★ 変更点 ★★★
+  const { id } = await params; // paramsをawaitで待つ
+
   try {
-    const { id } = await params;
+    const existingTopic = await prisma.topic.findUnique({ where: { id } });
+    if (!existingTopic || existingTopic.userId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     await prisma.topic.delete({
       where: { id },

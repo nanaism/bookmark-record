@@ -1,19 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "../../../../../auth";
 
+// paramsがPromiseであることを型で明示
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
 /**
- * 指定されたブックマークの情報を更新する
- *
- * @param request - リクエストオブジェクト（url, description, topicIdを含む）
- * @param params - URLパラメータ（ブックマークIDを含む）
- * @returns 更新されたブックマーク情報
+ * 指定されたブックマークの情報を更新する (本人所有のものに限る)
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  // ★★★ 変更点 ★★★
+  const { id } = await params; // paramsをawaitで待つ
+
   try {
-    const { id } = await params;
     const body = await request.json();
     const { url, description, topicId } = body;
 
@@ -24,7 +29,6 @@ export async function PUT(
       );
     }
 
-    // URLの形式が正しいかを検証（不正なURLの場合はエラーを返す）
     try {
       new URL(url);
     } catch {
@@ -32,6 +36,13 @@ export async function PUT(
         { error: "Invalid URL format" },
         { status: 400 }
       );
+    }
+
+    const existingBookmark = await prisma.bookmark.findUnique({
+      where: { id },
+    });
+    if (!existingBookmark || existingBookmark.authorId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const bookmark = await prisma.bookmark.update({
@@ -54,18 +65,24 @@ export async function PUT(
 }
 
 /**
- * 指定されたブックマークを削除する
- *
- * @param request - リクエストオブジェクト
- * @param params - URLパラメータ（ブックマークIDを含む）
- * @returns 削除成功メッセージ
+ * 指定されたブックマークを削除する (本人所有のものに限る)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  // ★★★ 変更点 ★★★
+  const { id } = await params; // paramsをawaitで待つ
+
   try {
-    const { id } = await params;
+    const existingBookmark = await prisma.bookmark.findUnique({
+      where: { id },
+    });
+    if (!existingBookmark || existingBookmark.authorId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     await prisma.bookmark.delete({
       where: { id },

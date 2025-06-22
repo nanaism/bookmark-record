@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * ブックマークグリッド表示コンポーネント
- *
- * 選択されたトピックに属するブックマークを
- * グリッドレイアウトで表示し、編集・削除機能を提供します。
- */
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,9 +35,6 @@ import {
 import Image from "next/image";
 import React from "react";
 
-/**
- * BookmarkGridコンポーネントのプロパティ
- */
 interface BookmarkGridProps {
   bookmarks: BookmarkType[];
   selectedTopic: TopicWithBookmarkCount | undefined;
@@ -66,7 +56,23 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   showBookmarkModal,
   setShowBookmarkModal,
 }) => {
-  // ローディング状態の表示
+  // ★★★ 変更点 ★★★
+  // 最終防衛ラインを、より親切なエラー表示に調整
+  if (!Array.isArray(bookmarks)) {
+    console.error(
+      "BookmarkGrid received a non-array value for bookmarks:",
+      bookmarks
+    );
+    // ユーザーにはエラーが発生したことを伝え、クラッシュを防ぐ
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-600">
+          エラーが発生しました。データを再読み込みしています...
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -75,7 +81,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
     );
   }
 
-  // トピック未選択時の案内表示
   if (!selectedTopic) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -92,7 +97,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
     );
   }
 
-  // ブックマーク未登録時の案内表示
   if (bookmarks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -120,7 +124,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
     );
   }
 
-  // ブックマーク一覧のグリッド表示
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {bookmarks.map((bookmark) => (
@@ -131,7 +134,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* ファビコン表示エリア */}
                 <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0 relative">
                   {getFaviconUrl(bookmark.url) ? (
                     <>
@@ -142,7 +144,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         height={24}
                         className="w-6 h-6"
                         onError={(e) => {
-                          // ファビコン読み込み失敗時にフォールバックアイコンを表示
                           const target = e.currentTarget;
                           target.style.display = "none";
                           const parent = target.parentElement;
@@ -177,7 +178,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                   </CardTitle>
                 </div>
               </div>
-              {/* ホバー時に表示される操作ボタン */}
               <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"

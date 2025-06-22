@@ -1,13 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "../../../../auth";
 
 /**
- * 特定トピックのブックマーク一覧を取得する
- *
- * @param request - リクエストオブジェクト（topicIdクエリパラメータを含む）
- * @returns ブックマーク一覧（作成日時の降順）
+ * 特定トピックのブックマーク一覧を取得する (本人所有のトピックに限る)
  */
 export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+
   try {
     const { searchParams } = new URL(request.url);
     const topicId = searchParams.get("topicId");
@@ -19,7 +23,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 指定されたトピックのブックマークを新しい順で取得
+    // ★★★ トピックの所有権を確認 ★★★
+    const topic = await prisma.topic.findFirst({
+      where: { id: topicId, userId },
+    });
+    if (!topic) {
+      return NextResponse.json(
+        { error: "Topic not found or access denied" },
+        { status: 404 }
+      );
+    }
+
     const bookmarks = await prisma.bookmark.findMany({
       where: { topicId },
       orderBy: {
@@ -39,11 +53,14 @@ export async function GET(request: NextRequest) {
 
 /**
  * 新しいブックマークを作成する
- *
- * @param request - リクエストオブジェクト（url, description, topicIdを含む）
- * @returns 作成されたブックマーク情報
  */
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+
   try {
     const body = await request.json();
     const { url, description, topicId } = body;
@@ -55,7 +72,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // URLの形式が正しいかを検証（不正なURLの場合はエラーを返す）
     try {
       new URL(url);
     } catch {
@@ -65,11 +81,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ★★★ トピックの所有権を確認 ★★★
+    const topic = await prisma.topic.findFirst({
+      where: { id: topicId, userId },
+    });
+    if (!topic) {
+      return NextResponse.json(
+        { error: "Topic not found or access denied" },
+        { status: 404 }
+      );
+    }
+
     const bookmark = await prisma.bookmark.create({
       data: {
         url,
         description: description || null,
         topicId,
+        authorId: userId, // ★ 投稿者IDを紐付ける
       },
     });
 

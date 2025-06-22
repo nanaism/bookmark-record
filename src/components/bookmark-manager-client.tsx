@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * ブックマーク管理メインコンポーネント
+ * ブックマーク管理メインコンポーネント (クライアントサイド)
  *
- * トピックサイドバーとブックマークグリッドを統合し、
+ * ユーザーの認証状態に応じて表示を切り替え、
+ * ログイン後はトピックサイドバーとブックマークグリッドを統合し、
  * 全体的なブックマーク管理機能を提供します。
- * カスタムフックを使用して状態管理とモーダル制御を行います。
  */
 
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,61 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useModals } from "@/hooks/use-modals";
 import { TopicWithBookmarkCount, useTopics } from "@/hooks/use-topics";
 import { Bookmark as BookmarkType } from "@prisma/client";
-import { ChevronDown, ChevronUp, Plus, Upload } from "lucide-react";
+import {
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  LogIn,
+  LogOut,
+  Plus,
+  Upload,
+} from "lucide-react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import React from "react";
 import { BookmarkGrid } from "./bookmark-grid";
 import { BookmarkModal } from "./modals/bookmark-modal";
 import { BulkAddModal } from "./modals/bulk-add-modal";
 import { TopicModal } from "./modals/topic-modal";
 import { TopicSidebar } from "./topic-sidebar";
+
+/**
+ * ヘッダーに表示するログイン/ログアウトボタンコンポーネント
+ */
+const AuthButton = () => {
+  const { data: session } = useSession();
+
+  if (session) {
+    return (
+      <div className="flex items-center gap-2">
+        {session.user?.image && (
+          <img
+            src={session.user.image}
+            alt={session.user.name || "User"}
+            className="w-8 h-8 rounded-full border-2 border-amber-200"
+          />
+        )}
+        <Button
+          variant="outline"
+          onClick={() => signOut()}
+          className="rounded-xl"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          ログアウト
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      onClick={() => signIn("google")}
+      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
+    >
+      <LogIn className="w-4 h-4 mr-2" />
+      Googleでログイン
+    </Button>
+  );
+};
 
 /**
  * BookmarkManagerClientコンポーネントのプロパティ
@@ -37,7 +85,10 @@ interface BookmarkManagerClientProps {
 export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   initialTopics,
 }) => {
-  // カスタムフックによる状態管理
+  // ★ セッション情報を取得
+  const { data: session, status } = useSession();
+
+  // カスタムフックによる状態管理 (ログイン後に使用)
   const topicsHook = useTopics(initialTopics);
   const bookmarksHook = useBookmarks(
     topicsHook.selectedTopicId,
@@ -45,45 +96,26 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   );
   const modalsHook = useModals(topicsHook.selectedTopicId);
 
-  /**
-   * トピックモーダルの送信処理
-   * 新規作成または編集を判定して適切な処理を実行
-   */
+  // --- 各種イベントハンドラー (ロジックは変更なし) ---
   const handleTopicModalSubmit = async () => {
     const success = topicsHook.editingTopic
       ? await topicsHook.handleUpdateTopic()
       : await topicsHook.handleCreateTopic();
-
-    if (success) {
-      modalsHook.closeTopicModal();
-    }
+    if (success) modalsHook.closeTopicModal();
   };
 
-  /**
-   * ブックマークモーダルの送信処理
-   * 新規作成または編集を判定して適切な処理を実行
-   */
   const handleBookmarkModalSubmit = async () => {
     const success = bookmarksHook.editingBookmark
       ? await bookmarksHook.handleUpdateBookmark()
       : await bookmarksHook.handleCreateBookmark();
-
-    if (success) {
-      modalsHook.closeBookmarkModal();
-    }
+    if (success) modalsHook.closeBookmarkModal();
   };
 
-  /**
-   * 一括追加モーダルの送信処理
-   */
   const handleBulkModalSubmit = async () => {
     const success = await bookmarksHook.handleBulkCreate();
-    if (success) {
-      modalsHook.closeBulkModal();
-    }
+    if (success) modalsHook.closeBulkModal();
   };
 
-  // トピック操作のハンドラー関数群
   const handleTopicCreate = () => {
     topicsHook.resetTopicForm();
     modalsHook.openTopicModal();
@@ -94,7 +126,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     modalsHook.openTopicModal();
   };
 
-  // ブックマーク操作のハンドラー関数群
   const handleBookmarkCreate = () => {
     bookmarksHook.resetBookmarkForms();
     modalsHook.openBookmarkModal();
@@ -110,7 +141,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     modalsHook.openBulkModal();
   };
 
-  // モーダル閉じる際のクリーンアップ処理
   const handleTopicModalClose = () => {
     modalsHook.closeTopicModal();
     topicsHook.resetTopicForm();
@@ -126,10 +156,44 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     bookmarksHook.resetBookmarkForms();
   };
 
+  // --- 表示の切り替え ---
+
+  // ★ 認証状態をチェック中
+  if (status === "loading") {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-amber-50">
+        <p>読み込み中...</p>
+      </div>
+    );
+  }
+
+  // ★ 未ログインの場合の表示
+  if (!session) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen w-full bg-amber-50">
+        <div className="text-center p-10 bg-white rounded-2xl shadow-lg max-w-md mx-4">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+              <Bookmark className="h-8 w-8" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            KokoLinkへようこそ！
+          </h1>
+          <p className="text-gray-600 mt-2 mb-6">
+            気になる情報やサイトを、トピックごとに整理・保存・共有できる、
+            あなただけのナレッジベースを作成しましょう。
+          </p>
+          <AuthButton />
+        </div>
+      </div>
+    );
+  }
+
+  // ★ ログイン済みの場合の表示
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-amber-50">
-        {/* トピック選択サイドバー */}
         <TopicSidebar
           topics={topicsHook.topics}
           selectedTopicId={topicsHook.selectedTopicId}
@@ -142,55 +206,56 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         />
 
         <SidebarInset className="flex-1">
-          {/* ヘッダー */}
           <header className="flex shrink-0 items-center justify-between p-6 bg-white">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-amber-100 rounded-lg" />
               <div className="min-w-0 flex-1">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-gray-900 truncate">
                   {topicsHook.selectedTopic?.title || "トピックを選択"}
                 </h2>
               </div>
             </div>
 
-            {/* トピック選択時のみ表示される操作ボタン */}
-            {topicsHook.selectedTopic && (
-              <div className="flex items-center gap-3">
-                <Dialog
-                  open={modalsHook.showBulkModal}
-                  onOpenChange={modalsHook.setShowBulkModal}
-                >
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-amber-100 border-amber-200 text-amber-700 hover:bg-amber-200 rounded-xl"
-                      onClick={handleBulkModalOpen}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      一括リンク追加
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
-
-                <Dialog
-                  open={modalsHook.showBookmarkModal}
-                  onOpenChange={modalsHook.setShowBookmarkModal}
-                >
-                  <DialogTrigger asChild>
-                    <Button
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
-                      onClick={handleBookmarkCreate}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      新しいブックマーク
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {/* トピック選択時のみ表示される操作ボタン */}
+              {topicsHook.selectedTopic && (
+                <div className="flex items-center gap-3">
+                  <Dialog
+                    open={modalsHook.showBulkModal}
+                    onOpenChange={handleBulkModalClose}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="bg-amber-100 border-amber-200 text-amber-700 hover:bg-amber-200 rounded-xl"
+                        onClick={handleBulkModalOpen}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        一括追加
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                  <Dialog
+                    open={modalsHook.showBookmarkModal}
+                    onOpenChange={handleBookmarkModalClose}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
+                        onClick={handleBookmarkCreate}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        追加
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
+              )}
+              {/* ★ 常に表示される認証ボタン */}
+              <AuthButton />
+            </div>
           </header>
 
-          {/* トピック説明文セクション（長い説明文の場合のみ表示） */}
           {topicsHook.selectedTopic?.description &&
             topicsHook.selectedTopic.description.length > 100 && (
               <div className="border-b border-amber-200 bg-white px-6 py-4">
@@ -205,8 +270,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 >
                   {topicsHook.selectedTopic.description}
                 </div>
-
-                {/* 長い説明文の場合は展開/折りたたみボタンを表示 */}
                 {topicsHook.selectedTopic.description.length > 100 && (
                   <Button
                     variant="ghost"
@@ -230,7 +293,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
               </div>
             )}
 
-          {/* ブックマーク一覧表示エリア */}
           <main className="flex-1 p-6 overflow-y-auto">
             <BookmarkGrid
               bookmarks={bookmarksHook.bookmarks}
@@ -246,7 +308,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         </SidebarInset>
       </div>
 
-      {/* モーダル群 */}
+      {/* モーダル群 (変更なし) */}
       <TopicModal
         isOpen={modalsHook.showTopicModal}
         onClose={handleTopicModalClose}
@@ -255,7 +317,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         setTopicForm={topicsHook.setTopicForm}
         onSubmit={handleTopicModalSubmit}
       />
-
       <BookmarkModal
         isOpen={modalsHook.showBookmarkModal}
         onClose={handleBookmarkModalClose}
@@ -265,7 +326,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         setBookmarkForm={bookmarksHook.setBookmarkForm}
         onSubmit={handleBookmarkModalSubmit}
       />
-
       <BulkAddModal
         isOpen={modalsHook.showBulkModal}
         onClose={handleBulkModalClose}

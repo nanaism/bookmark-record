@@ -1,14 +1,24 @@
 import { prisma } from "@/lib/prisma";
+import { Topic } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "../../../../auth";
 
 /**
- * 全てのトピック一覧を取得する
- *
- * @returns トピック一覧（ブックマーク数を含む、更新日時の降順）
+ * ログインユーザーのトピック一覧を取得する
  */
 export async function GET() {
+  // 1. セッション情報を取得
+  const session = await auth();
+  // 2. 認証チェック
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+
   try {
+    // 3. 自分のuserIdに紐づくトピックのみを検索
     const topics = await prisma.topic.findMany({
+      where: { userId },
       include: {
         _count: {
           select: { bookmarks: true },
@@ -19,11 +29,12 @@ export async function GET() {
       },
     });
 
-    // レスポンス用にブックマーク数を追加（フロントエンドで使いやすい形式に変換）
-    const topicsWithCount = topics.map((topic) => ({
-      ...topic,
-      bookmarkCount: topic._count.bookmarks,
-    }));
+    const topicsWithCount = topics.map(
+      (topic: Topic & { _count: { bookmarks: number } }) => ({
+        ...topic,
+        bookmarkCount: topic._count.bookmarks,
+      })
+    );
 
     return NextResponse.json(topicsWithCount);
   } catch (error) {
@@ -37,11 +48,16 @@ export async function GET() {
 
 /**
  * 新しいトピックを作成する
- *
- * @param request - リクエストオブジェクト（title, description, emojiを含む）
- * @returns 作成されたトピック情報（ブックマーク数を含む）
  */
 export async function POST(request: NextRequest) {
+  // 1. セッション情報を取得
+  const session = await auth();
+  // 2. 認証チェック
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+
   try {
     const body = await request.json();
     const { title, description, emoji } = body;
@@ -50,11 +66,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
+    // 3. ログインユーザーのIDを紐付けて作成
     const topic = await prisma.topic.create({
       data: {
         title,
         description: description || null,
-        emoji: emoji || "📁", // デフォルトの絵文字を設定
+        emoji: emoji || "📁",
+        userId: userId, // ★ ユーザーIDを紐付ける
       },
       include: {
         _count: {
@@ -63,7 +81,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // レスポンス用にブックマーク数を追加
     const topicWithCount = {
       ...topic,
       bookmarkCount: topic._count.bookmarks,
