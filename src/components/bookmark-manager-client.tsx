@@ -13,7 +13,6 @@ import { TopicWithBookmarkCount, useTopics } from "@/hooks/use-topics";
 import { arrayMove } from "@dnd-kit/sortable";
 import { Bookmark as BookmarkType } from "@prisma/client";
 import {
-  Bookmark,
   ChevronDown,
   ChevronUp,
   LogIn,
@@ -40,7 +39,6 @@ const AuthButton = () => {
   if (session) {
     return (
       <div className="flex items-center gap-2">
-        {" "}
         {session.user?.image && (
           <Image
             src={session.user.image}
@@ -49,15 +47,14 @@ const AuthButton = () => {
             height={32}
             className="w-8 h-8 rounded-full border-2 border-amber-200"
           />
-        )}{" "}
+        )}
         <Button
           variant="outline"
           onClick={() => signOut()}
           className="rounded-xl"
         >
-          {" "}
-          <LogOut className="w-4 h-4 mr-2" /> ログアウト{" "}
-        </Button>{" "}
+          <LogOut className="w-4 h-4 mr-2" /> ログアウト
+        </Button>
       </div>
     );
   }
@@ -66,8 +63,7 @@ const AuthButton = () => {
       onClick={() => signIn("google")}
       className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
     >
-      {" "}
-      <LogIn className="w-4 h-4 mr-2" /> Googleでログイン{" "}
+      <LogIn className="w-4 h-4 mr-2" /> Googleでログイン
     </Button>
   );
 };
@@ -269,32 +265,61 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   if (status === "loading") {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-amber-50">
-        {" "}
-        <p>読み込み中...</p>{" "}
+        <p>読み込み中...</p>
       </div>
     );
   }
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-screen w-full bg-amber-50">
-        {" "}
         <div className="text-center p-10 bg-white rounded-2xl shadow-lg max-w-md mx-4">
-          {" "}
           <div className="flex justify-center mb-4">
-            {" "}
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-              {" "}
-              <Bookmark className="h-8 w-8" />{" "}
-            </div>{" "}
-          </div>{" "}
-          <h1 className="text-2xl font-bold text-gray-900"> Kokolink </h1>{" "}
+            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white shadow border">
+              <Image
+                src="/favicon.ico"
+                alt="Chienowa Favicon"
+                width={80}
+                height={80}
+                className="rounded-full"
+                priority
+              />
+            </div>
+          </div>
+          <h1 className="text-2xl font-sans font-bold text-gray-900">
+            Chienowa
+          </h1>
           <p className="text-gray-600 mt-2 mb-6">
-            {" "}
-            気になる情報やサイトを、トピックごとに整理・保存・共有できる、
-            あなただけのナレッジベースを作成しましょう。{" "}
-          </p>{" "}
-          <AuthButton />{" "}
-        </div>{" "}
+            世界最高のナレッジベースを作成しよう。
+          </p>
+          <AuthButton />
+        </div>
+      </div>
+    );
+  }
+  if (!session) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen w-full bg-amber-50">
+        <div className="text-center p-10 bg-white rounded-2xl shadow-lg max-w-md mx-4">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white shadow border">
+              <Image
+                src="/favicon.ico"
+                alt="Chienowa Favicon"
+                width={80}
+                height={80}
+                className="rounded-full"
+                priority
+              />
+            </div>
+          </div>
+          <h1 className="text-2xl font-sans font-bold text-gray-900">
+            Chienowa
+          </h1>
+          <p className="text-gray-600 mt-2 mb-6">
+            世界最高のナレッジベースを作成しよう。
+          </p>
+          <AuthButton />
+        </div>
       </div>
     );
   }
@@ -321,15 +346,12 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         <SidebarInset className="flex-1 flex flex-col">
           <header className="flex shrink-0 items-center justify-between p-6 bg-white border-b border-amber-200">
             <div className="flex items-center gap-4">
-              {" "}
-              <SidebarTrigger className="hover:bg-amber-100 rounded-lg" />{" "}
+              <SidebarTrigger className="hover:bg-amber-100 rounded-lg" />
               <div className="min-w-0 flex-1">
-                {" "}
                 <h2 className="text-xl font-bold text-gray-900 truncate">
-                  {" "}
-                  {getHeaderTitle()}{" "}
-                </h2>{" "}
-              </div>{" "}
+                  {getHeaderTitle()}
+                </h2>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               {topicsHook.selectedTopic && (
@@ -341,17 +363,14 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                       modalsHook.setShowBulkModal(isOpen);
                     }}
                   >
-                    {" "}
                     <DialogTrigger asChild>
-                      {" "}
                       <Button
                         variant="outline"
                         className="bg-amber-100 border-amber-200 text-amber-700 hover:bg-amber-200 rounded-xl"
                       >
-                        {" "}
-                        <Upload className="h-4 w-4 mr-2" /> 一括追加{" "}
-                      </Button>{" "}
-                    </DialogTrigger>{" "}
+                        <Upload className="h-4 w-4 mr-2" /> 一括追加
+                      </Button>
+                    </DialogTrigger>
                     <BulkAddModal
                       isOpen={modalsHook.showBulkModal}
                       onClose={handleBulkModalClose}
@@ -360,7 +379,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                       setBulkForm={bookmarksHook.setBulkForm}
                       onSubmit={handleBulkModalSubmit}
                       isSubmitting={bookmarksHook.isSubmitting}
-                    />{" "}
+                    />
                   </Dialog>
                   <Dialog
                     open={modalsHook.showBookmarkModal}
@@ -369,14 +388,11 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                       modalsHook.setShowBookmarkModal(isOpen);
                     }}
                   >
-                    {" "}
                     <DialogTrigger asChild>
-                      {" "}
                       <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm">
-                        {" "}
-                        <Plus className="h-4 w-4 mr-2" /> 追加{" "}
-                      </Button>{" "}
-                    </DialogTrigger>{" "}
+                        <Plus className="h-4 w-4 mr-2" /> 追加
+                      </Button>
+                    </DialogTrigger>
                     <BookmarkModal
                       isOpen={modalsHook.showBookmarkModal}
                       onClose={handleBookmarkModalClose}
@@ -386,7 +402,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                       setBookmarkForm={bookmarksHook.setBookmarkForm}
                       onSubmit={handleBookmarkModalSubmit}
                       isSubmitting={bookmarksHook.isSubmitting}
-                    />{" "}
+                    />
                   </Dialog>
                 </div>
               )}
@@ -405,8 +421,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                   }`}
                   style={{ whiteSpace: "pre-wrap" }}
                 >
-                  {" "}
-                  {topicsHook.selectedTopic.description}{" "}
+                  {topicsHook.selectedTopic.description}
                 </div>
                 {topicsHook.selectedTopic.description.length > 100 && (
                   <Button
@@ -415,18 +430,15 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                     onClick={modalsHook.toggleDescriptionExpansion}
                     className="mt-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg"
                   >
-                    {" "}
                     {modalsHook.isDescriptionExpanded ? (
                       <>
-                        {" "}
-                        <ChevronUp className="w-4 h-4 mr-1" /> 折りたたむ{" "}
+                        <ChevronUp className="w-4 h-4 mr-1" /> 折りたたむ
                       </>
                     ) : (
                       <>
-                        {" "}
-                        <ChevronDown className="w-4 h-4 mr-1" /> もっと見る{" "}
+                        <ChevronDown className="w-4 h-4 mr-1" /> もっと見る
                       </>
-                    )}{" "}
+                    )}
                   </Button>
                 )}
               </div>

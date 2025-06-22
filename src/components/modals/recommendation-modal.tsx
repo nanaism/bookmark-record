@@ -88,19 +88,16 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
         <div className="mt-6 min-h-[240px] max-h-[60vh] overflow-y-auto pr-2">
           {isLoading ? (
             <div className="space-y-4">
-              {" "}
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex gap-4 p-2">
-                  {" "}
-                  <Skeleton className="h-24 w-32 rounded-lg bg-gray-200" />{" "}
+                  <Skeleton className="h-24 w-32 rounded-lg bg-gray-200" />
                   <div className="flex-1 space-y-2">
-                    {" "}
-                    <Skeleton className="h-4 w-3/4 bg-gray-200" />{" "}
-                    <Skeleton className="h-4 w-1/2 bg-gray-200" />{" "}
-                    <Skeleton className="h-8 w-20 rounded-lg bg-gray-200" />{" "}
-                  </div>{" "}
+                    <Skeleton className="h-4 w-3/4 bg-gray-200" />
+                    <Skeleton className="h-4 w-1/2 bg-gray-200" />
+                    <Skeleton className="h-8 w-20 rounded-lg bg-gray-200" />
+                  </div>
                 </div>
-              ))}{" "}
+              ))}
             </div>
           ) : (
             <div className="space-y-4">
@@ -125,8 +122,7 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-gray-100">
-                              {" "}
-                              <Globe className="w-8 h-8 text-gray-400" />{" "}
+                              <Globe className="w-8 h-8 text-gray-400" />
                             </div>
                           )}
                         </a>
@@ -141,14 +137,12 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              {" "}
-                              {rec.title}{" "}
+                              {rec.title}
                             </a>
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="mt-2 p-0 text-xs text-gray-500">
-                          {" "}
-                          {extractDomain(rec.url)}{" "}
+                          {extractDomain(rec.url)}
                         </CardContent>
                       </div>
                       <div className="mt-2 flex shrink-0 justify-end">
@@ -172,13 +166,11 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
                               {userTopics.length > 0 ? (
                                 <div>
                                   <p className="text-sm font-medium text-gray-800 mb-2">
-                                    {" "}
-                                    追加先のトピックを選択{" "}
+                                    追加先のトピックを選択
                                   </p>
                                   <Select onValueChange={setSelectedTopicId}>
                                     <SelectTrigger>
-                                      {" "}
-                                      <SelectValue placeholder="あなたのトピック..." />{" "}
+                                      <SelectValue placeholder="あなたのトピック..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {userTopics.map((topic) => (
@@ -186,8 +178,7 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
                                           key={topic.id}
                                           value={topic.id}
                                         >
-                                          {" "}
-                                          {topic.emoji} {topic.title}{" "}
+                                          {topic.emoji} {topic.title}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -202,28 +193,24 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
                                       }
                                     }}
                                   >
-                                    {" "}
-                                    確定{" "}
+                                    確定
                                   </Button>
                                 </div>
                               ) : (
                                 <div>
                                   <p className="text-sm font-medium text-gray-800 mb-2">
-                                    {" "}
-                                    最初の一歩！{" "}
+                                    最初の一歩！
                                   </p>
                                   <p className="text-xs text-gray-500 mb-3">
-                                    {" "}
-                                    このブックマークを追加するために、最初のトピックを作成しましょう。{" "}
+                                    このブックマークを追加するために、最初のトピックを作成しましょう。
                                   </p>
                                   <Button
                                     size="sm"
                                     className="w-full"
                                     onClick={() => onTopicCreate(rec)}
                                   >
-                                    {" "}
-                                    <Plus className="w-4 h-4 mr-2" />{" "}
-                                    新しいトピックを作成{" "}
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    新しいトピックを作成
                                   </Button>
                                 </div>
                               )}
@@ -236,8 +223,7 @@ export const RecommendationModal: React.FC<RecommendationModalProps> = ({
                 ))
               ) : (
                 <div className="flex-1 pt-16 text-center text-gray-500">
-                  {" "}
-                  関連する情報が見つかりませんでした。{" "}
+                  関連する情報が見つかりませんでした。
                 </div>
               )}
             </div>

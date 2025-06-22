@@ -125,41 +125,34 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {" "}
         {Array.from({ length: 8 }).map((_, index) => (
           <div
             key={index}
             className="flex flex-col border border-amber-100 rounded-2xl p-4 gap-4 bg-white"
           >
-            {" "}
-            <Skeleton className="aspect-[1.91/1] w-full rounded-xl bg-amber-100" />{" "}
+            <Skeleton className="aspect-[1.91/1] w-full rounded-xl bg-amber-100" />
             <div className="space-y-3">
-              {" "}
-              <Skeleton className="h-4 w-1/3 bg-amber-100" />{" "}
-              <Skeleton className="h-5 w-full bg-amber-100" />{" "}
-              <Skeleton className="h-5 w-4/5 bg-amber-100" />{" "}
-            </div>{" "}
+              <Skeleton className="h-4 w-1/3 bg-amber-100" />
+              <Skeleton className="h-5 w-full bg-amber-100" />
+              <Skeleton className="h-5 w-4/5 bg-amber-100" />
+            </div>
           </div>
-        ))}{" "}
+        ))}
       </div>
     );
   }
   if (selectedTopic === undefined && bookmarks.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        {" "}
         <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mb-4">
-          {" "}
-          <Star className="w-8 h-8 text-amber-600" />{" "}
-        </div>{" "}
+          <Star className="w-8 h-8 text-amber-600" />
+        </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {" "}
-          お気に入りのブックマークはありません{" "}
-        </h3>{" "}
+          お気に入りのブックマークはありません
+        </h3>
         <p className="text-gray-600">
-          {" "}
-          ブックマークの星アイコンをクリックして、お気に入りに追加しましょう。{" "}
-        </p>{" "}
+          ブックマークの星アイコンをクリックして、お気に入りに追加しましょう。
+        </p>
       </div>
     );
   }
@@ -167,45 +160,36 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   } else if (!selectedTopic) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        {" "}
         <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mb-4">
-          {" "}
-          <Folder className="w-8 h-8 text-amber-600" />{" "}
-        </div>{" "}
+          <Folder className="w-8 h-8 text-amber-600" />
+        </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {" "}
-          トピックを選択{" "}
-        </h3>{" "}
+          トピックを選択
+        </h3>
         <p className="text-gray-600">
-          {" "}
-          サイドバーからトピックを選択して、ブックマークを表示・管理してください。{" "}
-        </p>{" "}
+          サイドバーからトピックを選択して、ブックマークを表示・管理してください。
+        </p>
       </div>
     );
   }
   if (bookmarks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        {" "}
         <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mb-4">
-          {" "}
-          <Bookmark className="w-8 h-8 text-amber-600" />{" "}
-        </div>{" "}
+          <Bookmark className="w-8 h-8 text-amber-600" />
+        </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {" "}
-          まだブックマークがありません{" "}
-        </h3>{" "}
+          まだブックマークがありません
+        </h3>
         <p className="text-gray-600 mb-6">
-          {" "}
-          このトピックに最初のブックマークを追加してください{" "}
-        </p>{" "}
+          このトピックに最初のブックマークを追加してください
+        </p>
         <Button
           className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
           onClick={onBookmarkCreate}
         >
-          {" "}
-          <Plus className="w-4 h-4 mr-2" /> ブックマーク追加{" "}
-        </Button>{" "}
+          <Plus className="w-4 h-4 mr-2" /> ブックマーク追加
+        </Button>
       </div>
     );
   }
@@ -256,8 +240,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     {bookmark.processingStatus === "PENDING" ||
                     bookmark.processingStatus === "IN_PROGRESS" ? (
                       <div className="flex items-center justify-center h-full">
-                        {" "}
-                        <Loader2 className="w-8 h-8 text-amber-300 animate-spin" />{" "}
+                        <Loader2 className="w-8 h-8 text-amber-300 animate-spin" />
                       </div>
                     ) : (
                       <a
@@ -266,7 +249,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         rel="noopener noreferrer"
                         className="block w-full h-full"
                       >
-                        {" "}
                         {bookmark.ogImage ? (
                           <Image
                             src={bookmark.ogImage}
@@ -279,10 +261,9 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                           />
                         ) : (
                           <div className="flex items-center justify-center h-full">
-                            {" "}
-                            <Globe className="w-10 h-10 text-amber-300" />{" "}
+                            <Globe className="w-10 h-10 text-amber-300" />
                           </div>
-                        )}{" "}
+                        )}
                       </a>
                     )}
                   </AspectRatio>
@@ -300,8 +281,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         }}
                       />
                       <CardTitle className="text-sm font-normal text-gray-500">
-                        {" "}
-                        {extractDomain(bookmark.url)}{" "}
+                        {extractDomain(bookmark.url)}
                       </CardTitle>
                     </div>
                   </CardHeader>
@@ -312,13 +292,11 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {" "}
-                        {bookmark.ogTitle || bookmark.url}{" "}
+                        {bookmark.ogTitle || bookmark.url}
                       </a>
                     </h3>
                     <CardDescription className="text-sm text-gray-600 line-clamp-2">
-                      {" "}
-                      {bookmark.description}{" "}
+                      {bookmark.description}
                     </CardDescription>
                   </CardContent>
                   <CardFooter className="p-0 mt-4 flex justify-between items-center">
@@ -328,8 +306,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                       rel="noopener noreferrer"
                       className="text-xs text-amber-600 hover:underline flex items-center gap-1"
                     >
-                      {" "}
-                      サイトへ移動 <ExternalLink className="w-3 h-3" />{" "}
+                      サイトへ移動 <ExternalLink className="w-3 h-3" />
                     </a>
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div onPointerDown={(e) => e.stopPropagation()}>
@@ -340,8 +317,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                           onClick={() => onFetchRecommendations(bookmark)}
                           title="関連コンテンツを探す"
                         >
-                          {" "}
-                          <Sparkles className="h-4 w-4" />{" "}
+                          <Sparkles className="h-4 w-4" />
                         </Button>
                       </div>
                       {currentUserId === bookmark.authorId && (
@@ -354,8 +330,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                               onClick={() => onBookmarkEdit(bookmark)}
                               title="編集する"
                             >
-                              {" "}
-                              <Edit className="h-4 w-4" />{" "}
+                              <Edit className="h-4 w-4" />
                             </Button>
                           </div>
                           {/* ★★★ このブロック全体が修正箇所 ★★★ */}
@@ -374,18 +349,15 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                               <AlertDialogContent className="rounded-2xl border border-red-200">
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>
-                                    {" "}
-                                    ブックマークを削除{" "}
+                                    ブックマークを削除
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    {" "}
-                                    このブックマークを削除してもよろしいですか？{" "}
+                                    このブックマークを削除してもよろしいですか？
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel className="rounded-xl">
-                                    {" "}
-                                    キャンセル{" "}
+                                    キャンセル
                                   </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() =>
@@ -393,8 +365,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                                     }
                                     className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
                                   >
-                                    {" "}
-                                    削除{" "}
+                                    削除
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
