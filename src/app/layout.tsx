@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ブックマークレコード",
-  description: "研究や学びのためのブックマーク管理ツール",
+  title: "Kokolink",
+  description: "すべてが、ここに。",
 };
 
 export default async function RootLayout({

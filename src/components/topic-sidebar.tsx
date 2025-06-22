@@ -68,7 +68,7 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
           </div>
           <div>
             <h1 className="text-lg font-semibold font-sans text-gray-900">
-              ブックマークレコード
+              Kokolink
             </h1>
             <p className="text-xs text-gray-600">シンプルにリンクを管理！</p>
           </div>

@@ -178,7 +178,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            KokoLinkへようこそ！
+            Kokolinkへようこそ！
           </h1>
           <p className="text-gray-600 mt-2 mb-6">
             気になる情報やサイトを、トピックごとに整理・保存・共有できる、
