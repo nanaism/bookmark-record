@@ -96,7 +96,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   );
   const modalsHook = useModals(topicsHook.selectedTopicId);
 
-  // --- 各種イベントハンドラー (ロジックは変更なし) ---
+  // --- 各種イベントハンドラー ---
   const handleTopicModalSubmit = async () => {
     const success = topicsHook.editingTopic
       ? await topicsHook.handleUpdateTopic()
@@ -126,19 +126,9 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     modalsHook.openTopicModal();
   };
 
-  const handleBookmarkCreate = () => {
-    bookmarksHook.resetBookmarkForms();
-    modalsHook.openBookmarkModal();
-  };
-
   const handleBookmarkEdit = (bookmark: BookmarkType) => {
     bookmarksHook.openEditBookmark(bookmark);
     modalsHook.openBookmarkModal();
-  };
-
-  const handleBulkModalOpen = () => {
-    bookmarksHook.resetBookmarkForms();
-    modalsHook.openBulkModal();
   };
 
   const handleTopicModalClose = () => {
@@ -205,8 +195,8 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
           setShowTopicModal={modalsHook.setShowTopicModal}
         />
 
-        <SidebarInset className="flex-1">
-          <header className="flex shrink-0 items-center justify-between p-6 bg-white">
+        <SidebarInset className="flex-1 flex flex-col">
+          <header className="flex shrink-0 items-center justify-between p-6 bg-white border-b border-amber-200">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-amber-100 rounded-lg" />
               <div className="min-w-0 flex-1">
@@ -220,35 +210,63 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
               {/* トピック選択時のみ表示される操作ボタン */}
               {topicsHook.selectedTopic && (
                 <div className="flex items-center gap-3">
+                  {/* --- ▼ BulkAddModal のトリガーを修正 --- */}
                   <Dialog
                     open={modalsHook.showBulkModal}
-                    onOpenChange={handleBulkModalClose}
+                    onOpenChange={(isOpen) => {
+                      if (isOpen) {
+                        bookmarksHook.resetBookmarkForms();
+                      }
+                      modalsHook.setShowBulkModal(isOpen);
+                    }}
                   >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
                         className="bg-amber-100 border-amber-200 text-amber-700 hover:bg-amber-200 rounded-xl"
-                        onClick={handleBulkModalOpen}
                       >
                         <Upload className="h-4 w-4 mr-2" />
                         一括追加
                       </Button>
                     </DialogTrigger>
+                    <BulkAddModal
+                      isOpen={modalsHook.showBulkModal}
+                      onClose={handleBulkModalClose}
+                      topics={topicsHook.topics}
+                      bulkForm={bookmarksHook.bulkForm}
+                      setBulkForm={bookmarksHook.setBulkForm}
+                      onSubmit={handleBulkModalSubmit}
+                    />
                   </Dialog>
+                  {/* --- ▲ BulkAddModal のトリガーを修正 --- */}
+
+                  {/* --- ▼ BookmarkModal のトリガーを修正 --- */}
                   <Dialog
                     open={modalsHook.showBookmarkModal}
-                    onOpenChange={handleBookmarkModalClose}
+                    onOpenChange={(isOpen) => {
+                      if (isOpen) {
+                        bookmarksHook.resetBookmarkForms();
+                      }
+                      modalsHook.setShowBookmarkModal(isOpen);
+                    }}
                   >
                     <DialogTrigger asChild>
-                      <Button
-                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
-                        onClick={handleBookmarkCreate}
-                      >
+                      <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm">
                         <Plus className="h-4 w-4 mr-2" />
                         追加
                       </Button>
                     </DialogTrigger>
+                    <BookmarkModal
+                      isOpen={modalsHook.showBookmarkModal}
+                      onClose={handleBookmarkModalClose}
+                      editingBookmark={bookmarksHook.editingBookmark}
+                      topics={topicsHook.topics}
+                      bookmarkForm={bookmarksHook.bookmarkForm}
+                      setBookmarkForm={bookmarksHook.setBookmarkForm}
+                      onSubmit={handleBookmarkModalSubmit}
+                    />
                   </Dialog>
+                  {/* --- ▲ BookmarkModal のトリガーを修正 --- */}
                 </div>
               )}
               {/* ★ 常に表示される認証ボタン */}
@@ -256,9 +274,9 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
             </div>
           </header>
 
-          {topicsHook.selectedTopic?.description &&
-            topicsHook.selectedTopic.description.length > 100 && (
-              <div className="border-b border-amber-200 bg-white px-6 py-4">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {topicsHook.selectedTopic?.description && (
+              <div className="shrink-0 border-b border-amber-200 bg-white px-6 py-4">
                 <div
                   className={`text-gray-700 leading-relaxed ${
                     !modalsHook.isDescriptionExpanded &&
@@ -293,22 +311,23 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
               </div>
             )}
 
-          <main className="flex-1 p-6 overflow-y-auto">
-            <BookmarkGrid
-              bookmarks={bookmarksHook.bookmarks}
-              selectedTopic={topicsHook.selectedTopic}
-              isLoading={!!bookmarksHook.isLoading}
-              onBookmarkEdit={handleBookmarkEdit}
-              onBookmarkDelete={bookmarksHook.handleDeleteBookmark}
-              onBookmarkCreate={handleBookmarkCreate}
-              showBookmarkModal={modalsHook.showBookmarkModal}
-              setShowBookmarkModal={modalsHook.setShowBookmarkModal}
-            />
-          </main>
+            <main className="flex-1 p-6 overflow-y-auto">
+              <BookmarkGrid
+                bookmarks={bookmarksHook.bookmarks}
+                selectedTopic={topicsHook.selectedTopic}
+                isLoading={!!bookmarksHook.isLoading}
+                onBookmarkEdit={handleBookmarkEdit}
+                onBookmarkDelete={bookmarksHook.handleDeleteBookmark}
+                onBookmarkCreate={() => modalsHook.setShowBookmarkModal(true)} // onBookmarkCreateはここで直接モーダルを開くように変更
+                showBookmarkModal={modalsHook.showBookmarkModal}
+                setShowBookmarkModal={modalsHook.setShowBookmarkModal}
+              />
+            </main>
+          </div>
         </SidebarInset>
       </div>
 
-      {/* モーダル群 (変更なし) */}
+      {/* TopicModalは外部で管理する方がシンプルなのでこのまま残す */}
       <TopicModal
         isOpen={modalsHook.showTopicModal}
         onClose={handleTopicModalClose}
@@ -316,23 +335,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         topicForm={topicsHook.topicForm}
         setTopicForm={topicsHook.setTopicForm}
         onSubmit={handleTopicModalSubmit}
-      />
-      <BookmarkModal
-        isOpen={modalsHook.showBookmarkModal}
-        onClose={handleBookmarkModalClose}
-        editingBookmark={bookmarksHook.editingBookmark}
-        topics={topicsHook.topics}
-        bookmarkForm={bookmarksHook.bookmarkForm}
-        setBookmarkForm={bookmarksHook.setBookmarkForm}
-        onSubmit={handleBookmarkModalSubmit}
-      />
-      <BulkAddModal
-        isOpen={modalsHook.showBulkModal}
-        onClose={handleBulkModalClose}
-        topics={topicsHook.topics}
-        bulkForm={bookmarksHook.bulkForm}
-        setBulkForm={bookmarksHook.setBulkForm}
-        onSubmit={handleBulkModalSubmit}
       />
     </SidebarProvider>
   );

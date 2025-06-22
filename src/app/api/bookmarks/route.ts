@@ -1,3 +1,4 @@
+import { getOgpData } from "@/lib/ogp"; // 忘れずに追加
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../../auth";
@@ -92,12 +93,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ★ OGPデータを取得
+    const ogp = await getOgpData(url);
+
     const bookmark = await prisma.bookmark.create({
       data: {
         url,
-        description: description || null,
+        description: description || ogp.description || null, // 説明がなければOGPの説明を使う
         topicId,
-        authorId: userId, // ★ 投稿者IDを紐付ける
+        authorId: userId,
+        ogTitle: ogp.title ?? null,
+        ogDescription: ogp.description ?? null,
+        ogImage: ogp.image ?? null,
       },
     });
 

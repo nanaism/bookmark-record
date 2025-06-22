@@ -1,3 +1,4 @@
+import { getOgpData } from "@/lib/ogp"; // 忘れずに追加
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
@@ -45,12 +46,31 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    let ogpDataToUpdate = {
+      ogTitle: existingBookmark.ogTitle,
+      ogDescription: existingBookmark.ogDescription,
+      ogImage: existingBookmark.ogImage,
+    };
+
+    if (existingBookmark.url !== url) {
+      const newOgp = await getOgpData(url);
+      // `undefined` の場合は `null` に変換する
+      ogpDataToUpdate = {
+        ogTitle: newOgp.title ?? null,
+        ogDescription: newOgp.description ?? null,
+        ogImage: newOgp.image ?? null,
+      };
+    }
+
     const bookmark = await prisma.bookmark.update({
       where: { id },
       data: {
         url,
         description: description || null,
         topicId,
+        ogTitle: ogpDataToUpdate.ogTitle,
+        ogDescription: ogpDataToUpdate.ogDescription,
+        ogImage: ogpDataToUpdate.ogImage,
       },
     });
 

@@ -11,11 +11,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio"; // AspectRatioを追加
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -36,7 +38,10 @@ import Image from "next/image";
 import React from "react";
 
 interface BookmarkGridProps {
-  bookmarks: BookmarkType[];
+  bookmarks: (BookmarkType & {
+    ogImage?: string | null;
+    ogTitle?: string | null;
+  })[];
   selectedTopic: TopicWithBookmarkCount | undefined;
   isLoading: boolean;
   onBookmarkEdit: (bookmark: BookmarkType) => void;
@@ -125,67 +130,88 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {bookmarks.map((bookmark) => (
         <Card
           key={bookmark.id}
-          className="group hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-xl"
+          className="group flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl"
         >
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0 relative">
-                  {getFaviconUrl(bookmark.url) ? (
-                    <>
-                      <Image
-                        src={getFaviconUrl(bookmark.url)!}
-                        alt=""
-                        width={24}
-                        height={24}
-                        className="w-6 h-6"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          target.style.display = "none";
-                          const parent = target.parentElement;
-                          if (parent) {
-                            const globeIcon = parent.querySelector(
-                              ".globe-icon"
-                            ) as HTMLElement;
-                            if (globeIcon) globeIcon.style.display = "block";
-                          }
-                        }}
-                      />
-                      <Globe
-                        className="globe-icon w-4 h-4 text-amber-600 absolute"
-                        style={{ display: "none" }}
-                      />
-                    </>
-                  ) : (
-                    <Globe className="w-4 h-4 text-amber-600" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="text-base leading-tight">
-                    <a
-                      href={bookmark.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-amber-700 hover:text-amber-800 font-semibold transition-colors flex items-center gap-1"
-                    >
-                      {extractDomain(bookmark.url)}
-                      <ExternalLink className="w-3 h-3 opacity-50" />
-                    </a>
-                  </CardTitle>
-                </div>
+          {/* --- ▼ OG画像表示エリア --- */}
+          <div className="w-full">
+            <AspectRatio
+              ratio={1.91 / 1} // 標準的なOGP画像の比率
+              className="bg-amber-50 rounded-t-2xl"
+            >
+              <a
+                href={bookmark.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full h-full"
+              >
+                {bookmark.ogImage ? (
+                  <Image
+                    src={bookmark.ogImage}
+                    alt={bookmark.ogTitle || "ブックマークのプレビュー画像"}
+                    fill
+                    className="object-cover rounded-t-2xl"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <Globe className="w-10 h-10 text-amber-300" />
+                  </div>
+                )}
+              </a>
+            </AspectRatio>
+          </div>
+          {/* --- ▲ OG画像表示エリア --- */}
+
+          <div className="flex flex-col flex-1 p-4">
+            <CardHeader className="p-0 mb-2">
+              <div className="flex items-center gap-2">
+                <Image
+                  src={getFaviconUrl(bookmark.url)!}
+                  alt=""
+                  width={16}
+                  height={16}
+                />
+                <CardTitle className="text-sm font-normal text-gray-500">
+                  {extractDomain(bookmark.url)}
+                </CardTitle>
               </div>
+            </CardHeader>
+
+            <CardContent className="p-0 flex-1">
+              <h3 className="font-semibold text-base text-gray-800 leading-snug mb-2 hover:text-amber-700">
+                <a
+                  href={bookmark.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {bookmark.ogTitle || bookmark.url}
+                </a>
+              </h3>
+              <CardDescription className="text-sm text-gray-600 line-clamp-2">
+                {bookmark.description}
+              </CardDescription>
+            </CardContent>
+
+            <CardFooter className="p-0 mt-4 flex justify-between items-center">
+              <a
+                href={bookmark.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-amber-600 hover:underline flex items-center gap-1"
+              >
+                サイトへ移動 <ExternalLink className="w-3 h-3" />
+              </a>
               <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 hover:bg-amber-50"
+                  className="h-7 w-7 p-0 hover:bg-amber-50"
                   onClick={() => onBookmarkEdit(bookmark)}
                 >
-                  <Edit className="h-3 w-3" />
+                  <Edit className="h-4 w-4" />
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -218,16 +244,8 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <CardDescription className="text-sm text-gray-700 leading-relaxed mb-3">
-              {bookmark.description}
-            </CardDescription>
-            <p className="text-xs text-gray-500 truncate bg-gray-50 px-2 py-1 rounded-lg">
-              {bookmark.url}
-            </p>
-          </CardContent>
+            </CardFooter>
+          </div>
         </Card>
       ))}
     </div>
