@@ -59,6 +59,9 @@ model Bookmark {
   updatedAt   DateTime @updatedAt
 
   isFavorite  Boolean  @default(false)
+  
+  order       Int? // 並び順を保存するフィールド。nullableにしておくことで既存データに影響を与えない
+
 
   // 外部キー: 所属するトピックのID
   topicId String

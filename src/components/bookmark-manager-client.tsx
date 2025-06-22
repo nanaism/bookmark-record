@@ -10,6 +10,7 @@ import {
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useModals } from "@/hooks/use-modals";
 import { TopicWithBookmarkCount, useTopics } from "@/hooks/use-topics";
+import { arrayMove } from "@dnd-kit/sortable"; // インポートを追加
 import { Bookmark as BookmarkType } from "@prisma/client";
 import {
   ChevronDown,
@@ -78,6 +79,32 @@ interface BookmarkManagerClientProps {
 export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   initialTopics,
 }) => {
+  // ▼▼▼ D&Dのハンドラを追加 ▼▼▼
+  const handleBookmarkOrderChange = (activeId: string, overId: string) => {
+    const oldIndex = bookmarksHook.bookmarks.findIndex(
+      (b) => b.id === activeId
+    );
+    const newIndex = bookmarksHook.bookmarks.findIndex((b) => b.id === overId);
+
+    // UIを即時反映（オプティミスティックアップデート）
+    const newOrderBookmarks = arrayMove(
+      bookmarksHook.bookmarks,
+      oldIndex,
+      newIndex
+    );
+    bookmarksHook.mutateBookmarks(newOrderBookmarks, false); // SWRキャッシュを更新(再検証なし)
+
+    // サーバーに新しい順序を送信
+    fetch("/api/bookmarks/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderedIds: newOrderBookmarks.map((b) => b.id) }),
+    }).catch(() => {
+      // エラー時はUIを元に戻す
+      bookmarksHook.mutateBookmarks();
+    });
+  };
+
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
   const { mutate: globalMutate } = useSWRConfig();
@@ -382,6 +409,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 setShowBookmarkModal={modalsHook.setShowBookmarkModal}
                 togglingFavoriteId={bookmarksHook.togglingFavoriteId}
                 onFetchRecommendations={handleFetchRecommendations}
+                onOrderChange={handleBookmarkOrderChange} // ★ propsを渡す
               />
             </main>
           </div>

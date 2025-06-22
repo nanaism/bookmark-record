@@ -18,9 +18,11 @@ export async function GET() {
         authorId: userId, // 自分が作成したブックマーク
         isFavorite: true, // お気に入り登録されているもの
       },
-      orderBy: {
-        updatedAt: "desc", // 更新が新しい順
-      },
+      orderBy: [
+        // ★ 配列形式で複数キーを指定
+        { order: "asc" }, // orderフィールドの昇順
+        { createdAt: "desc" }, // orderがnullの場合は作成日の降順
+      ],
     });
 
     return NextResponse.json(favoriteBookmarks);

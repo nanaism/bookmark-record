@@ -37,9 +37,11 @@ export async function GET(request: NextRequest) {
 
     const bookmarks = await prisma.bookmark.findMany({
       where: { topicId },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        // ★ 配列形式で複数キーを指定
+        { order: "asc" }, // orderフィールドの昇順
+        { createdAt: "desc" }, // orderがnullの場合は作成日の降順
+      ],
     });
 
     return NextResponse.json(bookmarks);
