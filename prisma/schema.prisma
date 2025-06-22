@@ -1,12 +1,55 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+ 
+/**
+ * ブックマーク管理アプリケーションのデータベーススキーマ
+ *
+ * トピック（カテゴリ）とブックマークの2つのエンティティで構成されています。
+ * 1つのトピックに対して複数のブックマークが関連付けられる1対多の関係です。
+ */
+ 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
-
+ 
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+ 
+/**
+ * トピック（ブックマークのカテゴリ）
+ *
+ * ブックマークを整理するためのカテゴリ機能を提供します。
+ * 各トピックには複数のブックマークを関連付けることができます。
+ */
+model Topic {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  emoji       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+ 
+  // リレーション: 1つのトピックに対して複数のブックマーク
+  bookmarks   Bookmark[]
+}
+ 
+/**
+ * ブックマーク（保存されたURL）
+ *
+ * ユーザーが保存したいWebページのURL情報を管理します。
+ * 必ずいずれかのトピックに関連付けられます。
+ */
+model Bookmark {
+  id          String   @id @default(cuid())
+  url         String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+ 
+  // 外部キー: 所属するトピックのID
+  topicId     String
+  // リレーション: トピック削除時にブックマークも自動削除（Cascade）
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
 }
