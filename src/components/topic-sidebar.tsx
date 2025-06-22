@@ -40,8 +40,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Bookmark, Edit, GripVertical, Plus, Star, Trash2 } from "lucide-react";
-import React from "react";
+import { Edit, GripVertical, Plus, Star, Trash2 } from "lucide-react";
+import Image from "next/image";
+import React, { useId } from "react"; // ★ useId をインポート
 
 // D&D用のラッパーコンポーネント
 const SortableTopicItem: React.FC<{
@@ -58,7 +59,6 @@ const SortableTopicItem: React.FC<{
 
   return (
     <div ref={setNodeRef} style={style} className="relative">
-      {/* ドラッグハンドル */}
       <div
         {...attributes}
         {...listeners}
@@ -100,6 +100,7 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  const dndId = useId(); // ★ 安定したIDを生成
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -110,22 +111,31 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
 
   return (
     <Sidebar className="border-r border-amber-200 bg-white shadow-sm">
+      {/* サイドバーヘッダー */}
       <SidebarHeader className="border-b border-amber-100 p-6 pr-0 bg-gradient-to-r from-amber-50 to-orange-50">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-            <Bookmark className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow border border-amber-200">
+            <Image
+              src="/favicon.ico"
+              alt="Chienowa Favicon"
+              className="h-8 w-8"
+              width={32}
+              height={32}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
           </div>
           <div>
             <h1 className="text-2xl font-semibold font-sans text-gray-900">
-              Kokolink
+              Chienowa
             </h1>
-            <p className="text-xs text-gray-600">すべての情報が、ここに。</p>
+            <p className="text-xs text-gray-600">知をつなぐ。未来がひらく。</p>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent className="bg-background">
         <DndContext
+          id={dndId} // ★ 生成したIDをコンテキストに渡す
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -151,7 +161,6 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
 
             <SidebarGroupContent className="px-2">
               <SidebarMenu className="space-y-2">
-                {/* お気に入りメニュー (D&D対象外) */}
                 <div
                   key="favorites-menu"
                   onClick={() => onTopicSelect("favorites")}
@@ -173,7 +182,6 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
                   </h3>
                 </div>
 
-                {/* D&D可能なトピック一覧 */}
                 <SortableContext
                   items={topics.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
