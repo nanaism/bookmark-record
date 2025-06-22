@@ -1,4 +1,3 @@
-import { getOgpData } from "@/lib/ogp"; // 忘れずに追加
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "../../../../auth";
@@ -48,6 +47,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    // ★ descriptionは受け取らないか、受けてもogDescriptionより優先するなど仕様を決める
     const { url, description, topicId } = body;
 
     if (!url || !topicId) {
@@ -57,39 +57,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    try {
-      new URL(url);
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid URL format" },
-        { status: 400 }
-      );
-    }
-
-    // ★★★ トピックの所有権を確認 ★★★
-    const topic = await prisma.topic.findFirst({
-      where: { id: topicId, userId },
-    });
-    if (!topic) {
-      return NextResponse.json(
-        { error: "Topic not found or access denied" },
-        { status: 404 }
-      );
-    }
-
-    // ★ OGPデータを取得
-    const ogp = await getOgpData(url);
-
+    // ★★★ OGP取得処理を削除！ ★★★
+    // まずはOGP情報が空の状態でブックマークを作成する
     const bookmark = await prisma.bookmark.create({
       data: {
         url,
-        description: description || ogp.description || null, // 説明がなければOGPの説明を使う
+        description: description || null, // フォームからの説明を一時的に使用
         topicId,
         authorId: userId,
-        ogTitle: ogp.title ?? null,
-        ogDescription: ogp.description ?? null,
-        ogImage: ogp.image ?? null,
+        ogTitle: url, // タイトルが空だと寂しいので、一旦URLを入れておく
+        ogDescription: "Loading...", // 処理中であることが分かるように
+        ogImage: null,
       },
+    });
+
+    // ★★★ Trigger the background processing ★★★
+    // 新しく作るAPIエンドポイントを「叩くだけ」で、OGP取得処理をバックグラウンドで開始させる
+    // `fetch`を`await`しないことで、この処理の完了を待たずにレスポンスを返す（Fire and Forget）
+    fetch(`${new URL(request.url).origin}/api/bookmarks/process-ogp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookmarkId: bookmark.id }),
     });
 
     return NextResponse.json(bookmark, { status: 201 });

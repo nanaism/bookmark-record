@@ -85,6 +85,9 @@ export const useBookmarks = (
       success = false;
     } finally {
       if (success) {
+        // ★★★ この再取得命令が重要 ★★★
+        // まず不完全なデータでUIが更新され、バックグラウンド処理完了後に
+        // SWRが自動で再取得して再度UIを更新してくれる
         await localMutate();
         await globalMutate("/api/topics");
         resetBookmarkForms();
