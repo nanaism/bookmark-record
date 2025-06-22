@@ -304,7 +304,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     </CardDescription>
                   </CardContent>
 
-                  {/* ★★★ このブロック全体を修正 ★★★ */}
                   <CardFooter className="p-0 mt-4 flex justify-between items-center">
                     <a
                       href={bookmark.url}
@@ -315,6 +314,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                       サイトへ移動 <ExternalLink className="w-3 h-3" />
                     </a>
 
+                    {/* ★★★ このブロックが修正箇所 ★★★ */}
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                       {/* AIボタンは常に表示 */}
                       <Button
