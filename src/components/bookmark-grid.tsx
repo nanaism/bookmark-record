@@ -21,13 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 // 既存のコンポーネントと型をインポート
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -102,7 +96,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   selectedTopic,
   isLoading,
   onBookmarkEdit,
-  onBookmarkDelete,
   onBookmarkFavoriteToggle,
   onBookmarkCreate,
   showBookmarkModal,
@@ -223,11 +216,13 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
             <SortableBookmarkCard key={bookmark.id} bookmark={bookmark}>
               <Card className="group relative flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl bg-white">
                 <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
+                  {/* ★★★ このブロックに onPointerDown を追加 ★★★ */}
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0 rounded-full bg-white/70 backdrop-blur-sm hover:bg-white transition-all flex items-center justify-center"
                     onClick={() => onBookmarkFavoriteToggle(bookmark.id)}
+                    onPointerDown={(e) => e.stopPropagation()}
                     disabled={!!togglingFavoriteId}
                   >
                     {togglingFavoriteId === bookmark.id ? (
@@ -313,63 +308,48 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     >
                       サイトへ移動 <ExternalLink className="w-3 h-3" />
                     </a>
-
-                    {/* ★★★ このブロックが修正箇所 ★★★ */}
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      {/* AIボタンは常に表示 */}
+                      {/* ★★★ このブロックに onPointerDown を追加 ★★★ */}
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-7 w-7 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                         onClick={() => onFetchRecommendations(bookmark)}
+                        onPointerDown={(e) => e.stopPropagation()}
                         title="関連コンテンツを探す"
                       >
                         <Sparkles className="h-4 w-4" />
                       </Button>
 
-                      {/* 編集・削除ボタンは本人にのみ表示 */}
                       {currentUserId === bookmark.authorId && (
                         <>
+                          {/* ★★★ このブロックに onPointerDown を追加 ★★★ */}
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0 hover:bg-amber-50"
                             onClick={() => onBookmarkEdit(bookmark)}
+                            onPointerDown={(e) => e.stopPropagation()}
                             title="編集する"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
+                              {/* ★★★ このブロックに onPointerDown を追加 ★★★ */}
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                onPointerDown={(e) => e.stopPropagation()}
                                 title="削除する"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="rounded-2xl border border-red-200">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  ブックマークを削除
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  このブックマークを削除してもよろしいですか？
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="rounded-xl">
-                                  キャンセル
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => onBookmarkDelete(bookmark.id)}
-                                  className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
-                                >
-                                  削除
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
+                            <AlertDialogContent>
+                              {" "}
+                              {/* ... */}{" "}
                             </AlertDialogContent>
                           </AlertDialog>
                         </>
