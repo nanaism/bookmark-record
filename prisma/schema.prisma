@@ -13,8 +13,11 @@ generator client {
 }
  
 datasource db {
-  provider = "sqlite"
+  // providerを "sqlite" から "postgresql" に変更
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  // 外部キー制約をDBレベルで持たないDBにも対応できるため、追加を推奨
+  relationMode = "prisma" 
 }
  
 /**
