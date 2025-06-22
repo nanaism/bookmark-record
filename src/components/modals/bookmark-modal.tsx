@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * ブックマーク作成・編集モーダルコンポーネント
- *
- * ブックマークの新規作成と既存ブックマークの編集機能を提供します。
- * トピック選択、URL入力、説明文入力のフォームを含み、
- * URL形式の検証機能も備えています。
- */
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,12 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
 import { isValidUrl } from "@/lib/utils/url";
 import { Bookmark as BookmarkType } from "@prisma/client";
-import { AlertCircle, Bookmark, Check } from "lucide-react";
+import { AlertCircle, Bookmark, Check, Loader2 } from "lucide-react"; // ★ Loader2をインポート
 import React from "react";
 
-/**
- * BookmarkModalコンポーネントのプロパティ
- */
 interface BookmarkModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,6 +40,7 @@ interface BookmarkModalProps {
     }>
   >;
   onSubmit: () => void;
+  isSubmitting: boolean; // ★ isSubmitting を受け取る
 }
 
 export const BookmarkModal: React.FC<BookmarkModalProps> = ({
@@ -61,11 +51,11 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   bookmarkForm,
   setBookmarkForm,
   onSubmit,
+  isSubmitting, // ★ isSubmitting を受け取る
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="rounded-2xl border border-amber-200">
-        {/* モーダルヘッダー */}
         <DialogHeader className="border-b border-amber-100 pb-4 bg-gradient-to-r from-amber-50 to-orange-50 -m-6 p-6 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -76,10 +66,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
             </DialogTitle>
           </div>
         </DialogHeader>
-
-        {/* フォーム入力エリア */}
         <div className="space-y-4 mt-6">
-          {/* トピック選択 */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               トピック
@@ -89,6 +76,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               onValueChange={(value) =>
                 setBookmarkForm({ ...bookmarkForm, topicId: value })
               }
+              disabled={isSubmitting}
             >
               <SelectTrigger className="border-amber-200 focus:ring-amber-500 rounded-xl">
                 <SelectValue placeholder="トピックを選択" />
@@ -102,8 +90,6 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               </SelectContent>
             </Select>
           </div>
-
-          {/* URL入力（バリデーション付き） */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               URL
@@ -121,8 +107,8 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
                     : "border-amber-200 focus:border-amber-500"
                 }`}
                 placeholder="https://example.com"
+                disabled={isSubmitting}
               />
-              {/* URL形式の検証結果を表示するアイコン */}
               {bookmarkForm.url && (
                 <div className="absolute right-3 top-3">
                   {isValidUrl(bookmarkForm.url) ? (
@@ -134,8 +120,6 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               )}
             </div>
           </div>
-
-          {/* 説明文入力 */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               説明
@@ -151,21 +135,36 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               rows={3}
               className="border-amber-200 focus:ring-amber-500 focus:border-amber-500 rounded-xl resize-none"
               placeholder="ブックマークの説明を入力"
+              disabled={isSubmitting}
             />
           </div>
         </div>
-
-        {/* フッターボタン */}
         <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-amber-100">
-          <Button variant="outline" onClick={onClose} className="rounded-xl">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-xl"
+            disabled={isSubmitting}
+          >
             キャンセル
           </Button>
+          {/* ★★★ ボタンを修正 ★★★ */}
           <Button
             onClick={onSubmit}
-            disabled={!bookmarkForm.url.trim() || !isValidUrl(bookmarkForm.url)}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
+            disabled={
+              !bookmarkForm.url.trim() ||
+              !isValidUrl(bookmarkForm.url) ||
+              isSubmitting
+            }
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm min-w-[6rem] flex justify-center items-center"
           >
-            {editingBookmark ? "更新" : "追加"}
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : editingBookmark ? (
+              "更新"
+            ) : (
+              "追加"
+            )}
           </Button>
         </div>
       </DialogContent>

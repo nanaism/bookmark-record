@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * トピック作成・編集モーダルコンポーネント
- *
- * トピックの新規作成と既存トピックの編集機能を提供します。
- * 絵文字、タイトル、説明文の入力フォームを含みます。
- */
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
-import { FileText } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react"; // ★ Loader2をインポート
 import React from "react";
 
 /**
@@ -40,6 +33,7 @@ interface TopicModalProps {
     }>
   >;
   onSubmit: () => void;
+  isSubmitting: boolean; // ★ isSubmitting を受け取る
 }
 
 export const TopicModal: React.FC<TopicModalProps> = ({
@@ -49,11 +43,11 @@ export const TopicModal: React.FC<TopicModalProps> = ({
   topicForm,
   setTopicForm,
   onSubmit,
+  isSubmitting, // ★ isSubmitting を受け取る
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="rounded-2xl border border-amber-200 max-w-2xl max-h-[90vh] flex flex-col">
-        {/* モーダルヘッダー */}
         <DialogHeader className="border-b border-amber-100 pb-4 bg-gradient-to-r from-amber-50 to-orange-50 -m-6 p-6 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -65,9 +59,7 @@ export const TopicModal: React.FC<TopicModalProps> = ({
           </div>
         </DialogHeader>
 
-        {/* フォーム入力エリア */}
-        <div className="flex-1 overflow-y-auto space-y-6 mt-6">
-          {/* 絵文字とタイトル入力 */}
+        <div className="flex-1 overflow-y-auto space-y-6 mt-6 p-1">
           <div className="grid grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -97,8 +89,6 @@ export const TopicModal: React.FC<TopicModalProps> = ({
               />
             </div>
           </div>
-
-          {/* 説明文入力 */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               説明・メモ
@@ -110,17 +100,8 @@ export const TopicModal: React.FC<TopicModalProps> = ({
               }
               rows={12}
               className="border-amber-200 focus:ring-amber-500 focus:border-amber-500 rounded-xl font-mono text-sm resize-none"
-              placeholder={`トピックの説明やメモを入力...
- 
-ここに詳細なメモを書くことができます：
-- 研究結果
-- 重要な注意事項
-- 進捗管理
-- 参考資料
- 
-改行や基本的な書式設定をサポートしています。`}
+              placeholder={`トピックの説明やメモを入力...`}
             />
-            {/* 文字数・行数カウンター */}
             <div className="flex items-center justify-between mt-3">
               <p className="text-xs text-gray-500 font-medium">
                 {topicForm.description.length} 文字
@@ -132,17 +113,28 @@ export const TopicModal: React.FC<TopicModalProps> = ({
           </div>
         </div>
 
-        {/* フッターボタン */}
         <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-amber-100">
-          <Button variant="outline" onClick={onClose} className="rounded-xl">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-xl"
+            disabled={isSubmitting}
+          >
             キャンセル
           </Button>
+          {/* ★★★ ボタンを修正 ★★★ */}
           <Button
             onClick={onSubmit}
-            disabled={!topicForm.title.trim()}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
+            disabled={!topicForm.title.trim() || isSubmitting}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm min-w-[6rem] flex justify-center items-center"
           >
-            {editingTopic ? "更新" : "作成"}
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : editingTopic ? (
+              "更新"
+            ) : (
+              "作成"
+            )}
           </Button>
         </div>
       </DialogContent>

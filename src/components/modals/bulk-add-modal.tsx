@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * ブックマーク一括追加モーダルコンポーネント
- *
- * 複数のURLを一度に追加する機能を提供します。
- * テキストエリアに改行区切りでURLを入力し、
- * 有効なURLのみを抽出してブックマークとして登録します。
- */
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,12 +17,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
 import { getValidUrls } from "@/lib/utils/url";
-import { Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react"; // ★ Loader2をインポート
 import React from "react";
 
-/**
- * BulkAddModalコンポーネントのプロパティ
- */
 interface BulkAddModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,6 +35,7 @@ interface BulkAddModalProps {
     }>
   >;
   onSubmit: () => void;
+  isSubmitting: boolean; // ★ isSubmitting を受け取る
 }
 
 export const BulkAddModal: React.FC<BulkAddModalProps> = ({
@@ -55,14 +45,13 @@ export const BulkAddModal: React.FC<BulkAddModalProps> = ({
   bulkForm,
   setBulkForm,
   onSubmit,
+  isSubmitting, // ★ isSubmitting を受け取る
 }) => {
-  // 入力されたテキストから有効なURLを抽出
   const validUrls = getValidUrls(bulkForm.urls);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="rounded-2xl border border-amber-200 max-w-lg">
-        {/* モーダルヘッダー */}
         <DialogHeader className="border-b border-amber-100 pb-4 bg-gradient-to-r from-amber-50 to-orange-50 -m-6 p-6 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -74,9 +63,7 @@ export const BulkAddModal: React.FC<BulkAddModalProps> = ({
           </div>
         </DialogHeader>
 
-        {/* フォーム入力エリア */}
         <div className="space-y-4 mt-6">
-          {/* トピック選択 */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               トピック
@@ -86,6 +73,7 @@ export const BulkAddModal: React.FC<BulkAddModalProps> = ({
               onValueChange={(value) =>
                 setBulkForm({ ...bulkForm, topicId: value })
               }
+              disabled={isSubmitting}
             >
               <SelectTrigger className="border-amber-200 focus:ring-amber-500 rounded-xl">
                 <SelectValue placeholder="トピックを選択" />
@@ -99,8 +87,6 @@ export const BulkAddModal: React.FC<BulkAddModalProps> = ({
               </SelectContent>
             </Select>
           </div>
-
-          {/* URL一括入力 */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               URLs
@@ -112,13 +98,9 @@ export const BulkAddModal: React.FC<BulkAddModalProps> = ({
               }
               rows={8}
               className="border-amber-200 focus:ring-amber-500 focus:border-amber-500 rounded-xl resize-none font-mono text-sm"
-              placeholder={`複数のURLを1行ずつ貼り付け：
- 
-https://example.com
-https://another-site.com
-https://third-site.org`}
+              placeholder={`複数のURLを1行ずつ貼り付け...`}
+              disabled={isSubmitting}
             />
-            {/* 入力状況の表示 */}
             <div className="flex items-center justify-between mt-3">
               <p className="text-xs text-gray-500 font-medium">
                 複数のURLを1行ずつ貼り付けてください
@@ -128,15 +110,12 @@ https://third-site.org`}
               </p>
             </div>
           </div>
-
-          {/* 有効なURLのプレビュー表示 */}
           {bulkForm.urls && validUrls.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <p className="text-sm font-semibold text-gray-700 mb-2">
                 プレビュー:
               </p>
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                {/* 最初の5つのURLを表示 */}
                 {validUrls.slice(0, 5).map((url, index) => (
                   <p
                     key={index}
@@ -145,7 +124,6 @@ https://third-site.org`}
                     {url}
                   </p>
                 ))}
-                {/* 5つ以上ある場合は残り数を表示 */}
                 {validUrls.length > 5 && (
                   <p className="text-xs text-amber-600 font-medium">
                     他 {validUrls.length - 5} 個のURL
@@ -156,17 +134,26 @@ https://third-site.org`}
           )}
         </div>
 
-        {/* フッターボタン */}
         <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-amber-100">
-          <Button variant="outline" onClick={onClose} className="rounded-xl">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-xl"
+            disabled={isSubmitting}
+          >
             キャンセル
           </Button>
+          {/* ★★★ ボタンを修正 ★★★ */}
           <Button
             onClick={onSubmit}
-            disabled={validUrls.length === 0}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm"
+            disabled={validUrls.length === 0 || isSubmitting}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-80 text-white rounded-xl shadow-sm min-w-[12rem] flex justify-center items-center"
           >
-            {validUrls.length} 個のブックマークを追加
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              `${validUrls.length} 個のブックマークを追加`
+            )}
           </Button>
         </div>
       </DialogContent>

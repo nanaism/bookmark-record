@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AspectRatio } from "@/components/ui/aspect-ratio"; // AspectRatioを追加
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton"; // ★ Skeletonをインポート
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
 import { extractDomain, getFaviconUrl } from "@/lib/utils/url";
 import { Bookmark as BookmarkType } from "@prisma/client";
@@ -38,10 +39,7 @@ import Image from "next/image";
 import React from "react";
 
 interface BookmarkGridProps {
-  bookmarks: (BookmarkType & {
-    ogImage?: string | null;
-    ogTitle?: string | null;
-  })[];
+  bookmarks: BookmarkType[];
   selectedTopic: TopicWithBookmarkCount | undefined;
   isLoading: boolean;
   onBookmarkEdit: (bookmark: BookmarkType) => void;
@@ -61,27 +59,24 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   showBookmarkModal,
   setShowBookmarkModal,
 }) => {
-  // ★★★ 変更点 ★★★
-  // 最終防衛ラインを、より親切なエラー表示に調整
-  if (!Array.isArray(bookmarks)) {
-    console.error(
-      "BookmarkGrid received a non-array value for bookmarks:",
-      bookmarks
-    );
-    // ユーザーにはエラーが発生したことを伝え、クラッシュを防ぐ
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">
-          エラーが発生しました。データを再読み込みしています...
-        </div>
-      </div>
-    );
-  }
-
+  // ★★★ isLoading時の処理をスケルトンに置き換える ★★★
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-amber-600">読み込み中...</div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {/* スケルトンカードを8つ表示する例 */}
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex flex-col border border-amber-100 rounded-2xl p-4 gap-4 bg-white"
+          >
+            <Skeleton className="aspect-[1.91/1] w-full rounded-xl bg-amber-100" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-1/3 bg-amber-100" />
+              <Skeleton className="h-5 w-full bg-amber-100" />
+              <Skeleton className="h-5 w-4/5 bg-amber-100" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -134,14 +129,10 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
       {bookmarks.map((bookmark) => (
         <Card
           key={bookmark.id}
-          className="group flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl"
+          className="group flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl bg-white"
         >
-          {/* --- ▼ OG画像表示エリア --- */}
           <div className="w-full">
-            <AspectRatio
-              ratio={1.91 / 1} // 標準的なOGP画像の比率
-              className="bg-amber-50 rounded-t-2xl"
-            >
+            <AspectRatio ratio={1.91 / 1} className="bg-amber-50 rounded-t-2xl">
               <a
                 href={bookmark.url}
                 target="_blank"
@@ -163,7 +154,6 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
               </a>
             </AspectRatio>
           </div>
-          {/* --- ▲ OG画像表示エリア --- */}
 
           <div className="flex flex-col flex-1 p-4">
             <CardHeader className="p-0 mb-2">
@@ -173,6 +163,9 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                   alt=""
                   width={16}
                   height={16}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <CardTitle className="text-sm font-normal text-gray-500">
                   {extractDomain(bookmark.url)}
@@ -218,9 +211,9 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="rounded-2xl border border-red-200">

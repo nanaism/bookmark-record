@@ -1,13 +1,5 @@
 "use client";
 
-/**
- * ブックマーク管理メインコンポーネント (クライアントサイド)
- *
- * ユーザーの認証状態に応じて表示を切り替え、
- * ログイン後はトピックサイドバーとブックマークグリッドを統合し、
- * 全体的なブックマーク管理機能を提供します。
- */
-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -36,9 +28,6 @@ import { BulkAddModal } from "./modals/bulk-add-modal";
 import { TopicModal } from "./modals/topic-modal";
 import { TopicSidebar } from "./topic-sidebar";
 
-/**
- * ヘッダーに表示するログイン/ログアウトボタンコンポーネント
- */
 const AuthButton = () => {
   const { data: session } = useSession();
 
@@ -75,9 +64,6 @@ const AuthButton = () => {
   );
 };
 
-/**
- * BookmarkManagerClientコンポーネントのプロパティ
- */
 interface BookmarkManagerClientProps {
   initialTopics: TopicWithBookmarkCount[];
 }
@@ -85,10 +71,8 @@ interface BookmarkManagerClientProps {
 export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   initialTopics,
 }) => {
-  // ★ セッション情報を取得
   const { data: session, status } = useSession();
 
-  // カスタムフックによる状態管理 (ログイン後に使用)
   const topicsHook = useTopics(initialTopics);
   const bookmarksHook = useBookmarks(
     topicsHook.selectedTopicId,
@@ -96,18 +80,17 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   );
   const modalsHook = useModals(topicsHook.selectedTopicId);
 
-  // --- 各種イベントハンドラー ---
   const handleTopicModalSubmit = async () => {
-    const success = topicsHook.editingTopic
-      ? await topicsHook.handleUpdateTopic()
-      : await topicsHook.handleCreateTopic();
+    const success = await (topicsHook.editingTopic
+      ? topicsHook.handleUpdateTopic()
+      : topicsHook.handleCreateTopic());
     if (success) modalsHook.closeTopicModal();
   };
 
   const handleBookmarkModalSubmit = async () => {
-    const success = bookmarksHook.editingBookmark
-      ? await bookmarksHook.handleUpdateBookmark()
-      : await bookmarksHook.handleCreateBookmark();
+    const success = await (bookmarksHook.editingBookmark
+      ? bookmarksHook.handleUpdateBookmark()
+      : bookmarksHook.handleCreateBookmark());
     if (success) modalsHook.closeBookmarkModal();
   };
 
@@ -146,9 +129,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     bookmarksHook.resetBookmarkForms();
   };
 
-  // --- 表示の切り替え ---
-
-  // ★ 認証状態をチェック中
   if (status === "loading") {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-amber-50">
@@ -157,7 +137,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     );
   }
 
-  // ★ 未ログインの場合の表示
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-screen w-full bg-amber-50">
@@ -180,7 +159,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     );
   }
 
-  // ★ ログイン済みの場合の表示
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-amber-50">
@@ -205,18 +183,13 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 </h2>
               </div>
             </div>
-
             <div className="flex items-center gap-4">
-              {/* トピック選択時のみ表示される操作ボタン */}
               {topicsHook.selectedTopic && (
                 <div className="flex items-center gap-3">
-                  {/* --- ▼ BulkAddModal のトリガーを修正 --- */}
                   <Dialog
                     open={modalsHook.showBulkModal}
                     onOpenChange={(isOpen) => {
-                      if (isOpen) {
-                        bookmarksHook.resetBookmarkForms();
-                      }
+                      if (isOpen) bookmarksHook.resetBookmarkForms();
                       modalsHook.setShowBulkModal(isOpen);
                     }}
                   >
@@ -236,17 +209,13 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                       bulkForm={bookmarksHook.bulkForm}
                       setBulkForm={bookmarksHook.setBulkForm}
                       onSubmit={handleBulkModalSubmit}
+                      isSubmitting={bookmarksHook.isSubmitting}
                     />
                   </Dialog>
-                  {/* --- ▲ BulkAddModal のトリガーを修正 --- */}
-
-                  {/* --- ▼ BookmarkModal のトリガーを修正 --- */}
                   <Dialog
                     open={modalsHook.showBookmarkModal}
                     onOpenChange={(isOpen) => {
-                      if (isOpen) {
-                        bookmarksHook.resetBookmarkForms();
-                      }
+                      if (isOpen) bookmarksHook.resetBookmarkForms();
                       modalsHook.setShowBookmarkModal(isOpen);
                     }}
                   >
@@ -264,12 +233,11 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                       bookmarkForm={bookmarksHook.bookmarkForm}
                       setBookmarkForm={bookmarksHook.setBookmarkForm}
                       onSubmit={handleBookmarkModalSubmit}
+                      isSubmitting={bookmarksHook.isSubmitting}
                     />
                   </Dialog>
-                  {/* --- ▲ BookmarkModal のトリガーを修正 --- */}
                 </div>
               )}
-              {/* ★ 常に表示される認証ボタン */}
               <AuthButton />
             </div>
           </header>
@@ -310,7 +278,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 )}
               </div>
             )}
-
             <main className="flex-1 p-6 overflow-y-auto">
               <BookmarkGrid
                 bookmarks={bookmarksHook.bookmarks}
@@ -318,7 +285,10 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
                 isLoading={!!bookmarksHook.isLoading}
                 onBookmarkEdit={handleBookmarkEdit}
                 onBookmarkDelete={bookmarksHook.handleDeleteBookmark}
-                onBookmarkCreate={() => modalsHook.setShowBookmarkModal(true)} // onBookmarkCreateはここで直接モーダルを開くように変更
+                onBookmarkCreate={() => {
+                  bookmarksHook.resetBookmarkForms();
+                  modalsHook.setShowBookmarkModal(true);
+                }}
                 showBookmarkModal={modalsHook.showBookmarkModal}
                 setShowBookmarkModal={modalsHook.setShowBookmarkModal}
               />
@@ -327,7 +297,6 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         </SidebarInset>
       </div>
 
-      {/* TopicModalは外部で管理する方がシンプルなのでこのまま残す */}
       <TopicModal
         isOpen={modalsHook.showTopicModal}
         onClose={handleTopicModalClose}
@@ -335,6 +304,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         topicForm={topicsHook.topicForm}
         setTopicForm={topicsHook.setTopicForm}
         onSubmit={handleTopicModalSubmit}
+        isSubmitting={topicsHook.isSubmitting}
       />
     </SidebarProvider>
   );

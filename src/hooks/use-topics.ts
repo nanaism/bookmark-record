@@ -29,6 +29,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     title: "",
     description: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false); // ★ 送信中状態を追加
 
   // SWRデータが利用可能な場合はそれを使用、そうでなければ初期データを使用
   const currentTopics = data && data.length > 0 ? data : initialTopics;
@@ -56,6 +57,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
   };
 
   const handleCreateTopic = async () => {
+    setIsSubmitting(true); // ★ ローディング開始
     try {
       const response = await fetch("/api/topics", {
         method: "POST",
@@ -83,12 +85,14 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     } catch (error) {
       console.error("Error creating topic:", error);
       return false;
+    } finally {
+      setIsSubmitting(false); // ★ ローディング終了
     }
   };
 
   const handleUpdateTopic = async () => {
     if (!editingTopic) return false;
-
+    setIsSubmitting(true); // ★ ローディング開始
     try {
       const response = await fetch(`/api/topics/${editingTopic.id}`, {
         method: "PUT",
@@ -111,6 +115,8 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     } catch (error) {
       console.error("Error updating topic:", error);
       return false;
+    } finally {
+      setIsSubmitting(false); // ★ ローディング終了
     }
   };
 
@@ -148,6 +154,7 @@ export const useTopics = (initialTopics: TopicWithBookmarkCount[] = []) => {
     topicForm,
     setTopicForm,
     editingTopic,
+    isSubmitting, // ★ 返り値に追加
 
     // 操作関数
     setSelectedTopicId,

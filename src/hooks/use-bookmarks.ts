@@ -33,6 +33,7 @@ export const useBookmarks = (
     topicId: topicId || "",
     urls: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false); // ★ 送信中状態を追加
 
   // 選択されたトピックが変更された時にフォームのトピックIDを更新
   useEffect(() => {
@@ -56,6 +57,8 @@ export const useBookmarks = (
   };
 
   const handleCreateBookmark = async () => {
+    setIsSubmitting(true); // ★ ローディング開始
+    let success = false;
     try {
       const response = await fetch("/api/bookmarks", {
         method: "POST",
@@ -68,24 +71,25 @@ export const useBookmarks = (
           topicId: bookmarkForm.topicId,
         }),
       });
-
-      if (response.ok) {
-        // ブックマークリストとトピックリスト（ブックマーク数更新のため）を再取得
+      success = response.ok;
+    } catch (error) {
+      console.error("Error creating bookmark:", error);
+      success = false;
+    } finally {
+      if (success) {
         await mutate();
         if (mutateTopics) await mutateTopics();
         resetBookmarkForms();
-        return true;
       }
-      return false;
-    } catch (error) {
-      console.error("Error creating bookmark:", error);
-      return false;
+      setIsSubmitting(false); // ★ ローディング終了
     }
+    return success;
   };
 
   const handleUpdateBookmark = async () => {
     if (!editingBookmark) return false;
-
+    setIsSubmitting(true); // ★ ローディング開始
+    let success = false;
     try {
       const response = await fetch(`/api/bookmarks/${editingBookmark.id}`, {
         method: "PUT",
@@ -98,27 +102,25 @@ export const useBookmarks = (
           topicId: bookmarkForm.topicId,
         }),
       });
-
-      if (response.ok) {
+      success = response.ok;
+    } catch (error) {
+      console.error("Error updating bookmark:", error);
+      success = false;
+    } finally {
+      if (success) {
         await mutate();
         if (mutateTopics) await mutateTopics();
         resetBookmarkForms();
-        return true;
       }
-      return false;
-    } catch (error) {
-      console.error("Error updating bookmark:", error);
-      return false;
+      setIsSubmitting(false); // ★ ローディング終了
     }
+    return success;
   };
 
-  /**
-   * 複数のURLを一括でブックマークとして作成する
-   * 改行区切りのURLテキストを解析して個別のブックマークを作成
-   */
   const handleBulkCreate = async () => {
     const urls = bulkForm.urls.split("\n").filter((url) => url.trim());
-
+    setIsSubmitting(true); // ★ ローディング開始
+    let success = false;
     try {
       const response = await fetch("/api/bookmarks/bulk", {
         method: "POST",
@@ -130,18 +132,19 @@ export const useBookmarks = (
           topicId: bulkForm.topicId,
         }),
       });
-
-      if (response.ok) {
+      success = response.ok;
+    } catch (error) {
+      console.error("Error creating bulk bookmarks:", error);
+      success = false;
+    } finally {
+      if (success) {
         await mutate();
         if (mutateTopics) await mutateTopics();
         resetBookmarkForms();
-        return true;
       }
-      return false;
-    } catch (error) {
-      console.error("Error creating bulk bookmarks:", error);
-      return false;
+      setIsSubmitting(false); // ★ ローディング終了
     }
+    return success;
   };
 
   const handleDeleteBookmark = async (bookmarkId: string) => {
@@ -175,6 +178,7 @@ export const useBookmarks = (
     bulkForm,
     setBulkForm,
     editingBookmark,
+    isSubmitting, // ★ 返り値に追加
 
     // 操作関数
     openEditBookmark,
