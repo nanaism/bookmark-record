@@ -19,10 +19,11 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useModals } from "@/hooks/use-modals";
 import { TopicWithBookmarkCount, useTopics } from "@/hooks/use-topics";
 import { Bookmark as BookmarkType } from "@prisma/client";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Upload } from "lucide-react";
 import React from "react";
 import { BookmarkGrid } from "./bookmark-grid";
 import { BookmarkModal } from "./modals/bookmark-modal";
+import { BulkAddModal } from "./modals/bulk-add-modal";
 import { TopicModal } from "./modals/topic-modal";
 import { TopicSidebar } from "./topic-sidebar";
 
@@ -72,6 +73,16 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     }
   };
 
+  /**
+   * 一括追加モーダルの送信処理
+   */
+  const handleBulkModalSubmit = async () => {
+    const success = await bookmarksHook.handleBulkCreate();
+    if (success) {
+      modalsHook.closeBulkModal();
+    }
+  };
+
   // トピック操作のハンドラー関数群
   const handleTopicCreate = () => {
     topicsHook.resetTopicForm();
@@ -94,6 +105,11 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
     modalsHook.openBookmarkModal();
   };
 
+  const handleBulkModalOpen = () => {
+    bookmarksHook.resetBookmarkForms();
+    modalsHook.openBulkModal();
+  };
+
   // モーダル閉じる際のクリーンアップ処理
   const handleTopicModalClose = () => {
     modalsHook.closeTopicModal();
@@ -102,6 +118,11 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
 
   const handleBookmarkModalClose = () => {
     modalsHook.closeBookmarkModal();
+    bookmarksHook.resetBookmarkForms();
+  };
+
+  const handleBulkModalClose = () => {
+    modalsHook.closeBulkModal();
     bookmarksHook.resetBookmarkForms();
   };
 
@@ -135,6 +156,22 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
             {/* トピック選択時のみ表示される操作ボタン */}
             {topicsHook.selectedTopic && (
               <div className="flex items-center gap-3">
+                <Dialog
+                  open={modalsHook.showBulkModal}
+                  onOpenChange={modalsHook.setShowBulkModal}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-amber-100 border-amber-200 text-amber-700 hover:bg-amber-200 rounded-xl"
+                      onClick={handleBulkModalOpen}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      一括リンク追加
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+
                 <Dialog
                   open={modalsHook.showBookmarkModal}
                   onOpenChange={modalsHook.setShowBookmarkModal}
@@ -227,6 +264,15 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
         bookmarkForm={bookmarksHook.bookmarkForm}
         setBookmarkForm={bookmarksHook.setBookmarkForm}
         onSubmit={handleBookmarkModalSubmit}
+      />
+
+      <BulkAddModal
+        isOpen={modalsHook.showBulkModal}
+        onClose={handleBulkModalClose}
+        topics={topicsHook.topics}
+        bulkForm={bookmarksHook.bulkForm}
+        setBulkForm={bookmarksHook.setBulkForm}
+        onSubmit={handleBulkModalSubmit}
       />
     </SidebarProvider>
   );
