@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { TopicWithBookmarkCount } from "@/hooks/use-topics";
 import { formatDate } from "@/lib/utils/date";
-import { Bookmark, Edit, Plus, Trash2 } from "lucide-react";
+import { Bookmark, Edit, Plus, Star, Trash2 } from "lucide-react";
 import React from "react";
 
 /**
@@ -99,6 +99,30 @@ export const TopicSidebar: React.FC<TopicSidebarProps> = ({
           {/* トピック一覧 */}
           <SidebarGroupContent className="px-2">
             <SidebarMenu className="space-y-2">
+              <div
+                key="favorites-menu"
+                onClick={() => onTopicSelect("favorites")}
+                className={`p-3 rounded-xl border cursor-pointer shadow-sm group flex items-center gap-3 ${
+                  selectedTopicId === "favorites"
+                    ? "bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300"
+                    : "bg-white border-amber-200 hover:border-amber-300 hover:shadow-md"
+                }`}
+              >
+                <div className="text-2xl flex-shrink-0">
+                  <Star
+                    className={`w-5 h-5 ${
+                      selectedTopicId === "favorites"
+                        ? "text-yellow-500"
+                        : "text-gray-400"
+                    }`}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 truncate text-sm">
+                    お気に入り
+                  </h3>
+                </div>
+              </div>
               {topics.map((topic) => (
                 <div
                   key={topic.id}

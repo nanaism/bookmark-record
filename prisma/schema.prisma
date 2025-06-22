@@ -58,6 +58,8 @@ model Bookmark {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  isFavorite  Boolean  @default(false)
+
   // 外部キー: 所属するトピックのID
   topicId String
   // リレーション: トピック削除時にブックマークも自動削除（Cascade）

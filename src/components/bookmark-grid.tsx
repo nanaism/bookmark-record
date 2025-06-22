@@ -33,6 +33,7 @@ import {
   Folder,
   Globe,
   Plus,
+  Star,
   Trash2,
 } from "lucide-react";
 import Image from "next/image";
@@ -47,6 +48,7 @@ interface BookmarkGridProps {
   onBookmarkCreate: () => void;
   showBookmarkModal: boolean;
   setShowBookmarkModal: (show: boolean) => void;
+  onBookmarkFavoriteToggle: (bookmarkId: string) => void; // ★ propsを追加
 }
 
 export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
@@ -58,6 +60,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   onBookmarkCreate,
   showBookmarkModal,
   setShowBookmarkModal,
+  onBookmarkFavoriteToggle, // ★ propsを受け取る
 }) => {
   // ★★★ isLoading時の処理をスケルトンに置き換える ★★★
   if (isLoading) {
@@ -124,13 +127,48 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
     );
   }
 
+  // ★★★ 「お気に入り」選択時用の表示を追加 ★★★
+  if (selectedTopic === undefined && bookmarks.length === 0 && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mb-4">
+          <Star className="w-8 h-8 text-amber-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          お気に入りのブックマークはありません
+        </h3>
+        <p className="text-gray-600">
+          ブックマークの星アイコンをクリックして、お気に入りに追加しましょう。
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {bookmarks.map((bookmark) => (
         <Card
           key={bookmark.id}
-          className="group flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl bg-white"
+          className="group relative flex flex-col hover:shadow-lg transition-all border-amber-200 hover:border-amber-300 rounded-2xl bg-white"
         >
+          {/* ▼▼▼ 星アイコンを右上に絶対配置 ▼▼▼ */}
+          <div className="absolute top-3 right-3 z-10">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 rounded-full bg-white/70 backdrop-blur-sm hover:bg-white transition-all"
+              onClick={() => onBookmarkFavoriteToggle(bookmark.id)}
+            >
+              <Star
+                className={`h-4 w-4 transition-all ${
+                  bookmark.isFavorite
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-400 group-hover:text-yellow-400"
+                }`}
+              />
+            </Button>
+          </div>
+          {/* ▲▲▲ ここまで追加 ▲▲▲ */}
           <div className="w-full">
             <AspectRatio ratio={1.91 / 1} className="bg-amber-50 rounded-t-2xl">
               <a

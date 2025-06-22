@@ -16,10 +16,13 @@ export const useBookmarks = (
   mutateTopics?: () => void
 ) => {
   // SWRを使用してブックマークデータを取得・キャッシュ
-  const { data, error, mutate } = useSWR<BookmarkType[]>(
-    topicId ? `/api/bookmarks?topicId=${topicId}` : null,
-    fetcher
-  );
+  const swrKey =
+    topicId === "favorites"
+      ? "/api/favorites" // topicIdが'favorites'なら専用APIを叩く
+      : topicId
+      ? `/api/bookmarks?topicId=${topicId}` // topicIdがあれば通常のAPI
+      : null; // topicIdがなければ何もしない
+  const { data, error, mutate } = useSWR<BookmarkType[]>(swrKey, fetcher);
 
   const [editingBookmark, setEditingBookmark] = useState<BookmarkType | null>(
     null
@@ -166,6 +169,31 @@ export const useBookmarks = (
     }
   };
 
+  const handleToggleFavorite = async (bookmarkId: string) => {
+    // UIを即時反映させるためのオプティミスティックアップデート
+    mutate(
+      (currentData) =>
+        currentData?.map((bookmark) =>
+          bookmark.id === bookmarkId
+            ? { ...bookmark, isFavorite: !bookmark.isFavorite }
+            : bookmark
+        ),
+      false // revalidateをfalseに
+    );
+
+    try {
+      await fetch(`/api/bookmarks/${bookmarkId}/favorite`, {
+        method: "PATCH",
+      });
+      // 最終的なデータで再検証
+      mutate();
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      // エラー時は元のデータに戻す
+      mutate();
+    }
+  };
+
   return {
     // データ
     bookmarks: data || [],
@@ -188,5 +216,6 @@ export const useBookmarks = (
     handleBulkCreate,
     handleDeleteBookmark,
     mutateBookmarks: mutate,
+    handleToggleFavorite,
   };
 };

@@ -21,6 +21,7 @@ import {
   Upload,
 } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import React from "react";
 import { BookmarkGrid } from "./bookmark-grid";
 import { BookmarkModal } from "./modals/bookmark-modal";
@@ -35,9 +36,11 @@ const AuthButton = () => {
     return (
       <div className="flex items-center gap-2">
         {session.user?.image && (
-          <img
+          <Image
             src={session.user.image}
             alt={session.user.name || "User"}
+            width={32} // widthの指定が必須
+            height={32} // heightの指定が必須
             className="w-8 h-8 rounded-full border-2 border-amber-200"
           />
         )}
@@ -72,6 +75,13 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
   initialTopics,
 }) => {
   const { data: session, status } = useSession();
+
+  const getHeaderTitle = () => {
+    if (topicsHook.selectedTopicId === "favorites") {
+      return "お気に入り";
+    }
+    return topicsHook.selectedTopic?.title || "トピックを選択";
+  };
 
   const topicsHook = useTopics(initialTopics);
   const bookmarksHook = useBookmarks(
@@ -179,7 +189,7 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
               <SidebarTrigger className="hover:bg-amber-100 rounded-lg" />
               <div className="min-w-0 flex-1">
                 <h2 className="text-xl font-bold text-gray-900 truncate">
-                  {topicsHook.selectedTopic?.title || "トピックを選択"}
+                  {getHeaderTitle()}
                 </h2>
               </div>
             </div>
@@ -281,10 +291,11 @@ export const BookmarkManagerClient: React.FC<BookmarkManagerClientProps> = ({
             <main className="flex-1 p-6 overflow-y-auto">
               <BookmarkGrid
                 bookmarks={bookmarksHook.bookmarks}
-                selectedTopic={topicsHook.selectedTopic}
+                selectedTopic={topicsHook.selectedTopic} // selectedTopicがお気に入り選択時にはundefinedになるので、その状態を渡す
                 isLoading={!!bookmarksHook.isLoading}
                 onBookmarkEdit={handleBookmarkEdit}
                 onBookmarkDelete={bookmarksHook.handleDeleteBookmark}
+                onBookmarkFavoriteToggle={bookmarksHook.handleToggleFavorite} // ★ この行を追加
                 onBookmarkCreate={() => {
                   bookmarksHook.resetBookmarkForms();
                   modalsHook.setShowBookmarkModal(true);
