@@ -1,5 +1,6 @@
-![Uploading FireShot Webpage Capture 017 - 'Chienowa' - chienowa.aiichiro.jp.png…]()
+![FireShot Webpage Capture 017 - 'Chienowa' - chienowa aiichiro jp](https://github.com/user-attachments/assets/275eec95-b771-4963-b58a-38a7d8a01677
 # 機能
+
 
 - トピック管理：
 -   学習トピックを追加・編集・削除し、表示する。
