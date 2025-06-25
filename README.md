@@ -17,7 +17,7 @@
 
 **以下のURLから、実際にアプリケーションをお試しいただけます！**
 
-### [➡️ Chienowaを試してみる](https://www.chienowa.aiichiro.jp/)
+### [➡️ Chienowaを試してみる](https://chienowa.aiichiro.jp/)
 
 ---
 
